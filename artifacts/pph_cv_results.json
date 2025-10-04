@@ -1,0 +1,9 @@
+{
+  "best_params": {
+    "classifier__max_depth": 4,
+    "classifier__max_features": "sqrt",
+    "classifier__min_samples_split": 5,
+    "classifier__n_estimators": 103
+  },
+  "best_score": 0.7686250444469537
+}
