@@ -8,6 +8,7 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
 import django_filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import User, Patient, ProgressNote, Alert
 from .serializers import (
@@ -20,6 +21,7 @@ from .serializers import (
 class PatientFilter(django_filters.FilterSet):
     """Filter for patient list view"""
     name = django_filters.CharFilter(lookup_expr='icontains')
+    file_number = django_filters.CharFilter(lookup_expr='icontains')
     case_type = django_filters.ChoiceFilter(choices=Patient.CASE_TYPE_CHOICES)
     stage = django_filters.ChoiceFilter(choices=Patient.STAGE_CHOICES)
     blood_group = django_filters.ChoiceFilter(choices=Patient.BLOOD_GROUP_CHOICES)
@@ -29,7 +31,7 @@ class PatientFilter(django_filters.FilterSet):
     
     class Meta:
         model = Patient
-        fields = ['name', 'case_type', 'stage', 'blood_group', 'room', 'age_min', 'age_max']
+        fields = ['name', 'file_number', 'case_type', 'stage', 'blood_group', 'room', 'age_min', 'age_max']
 
 
 class PatientListCreateView(generics.ListCreateAPIView):
@@ -59,22 +61,36 @@ class LaborDeliveryPatientsView(generics.ListAPIView):
     """Get patients in labor and delivery"""
     serializer_class = PatientSerializer
     permission_classes = [IsAuthenticated]
-    
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'file_number', 'patient_id', 'nationality']
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+    filterset_class = PatientFilter
+
     def get_queryset(self):
-        return Patient.objects.filter(
+        queryset = Patient.objects.filter(
             case_type='labor'
-        ).order_by('-created_at')
+        )
+        # Search and ordering handled by filter_backends
+        return queryset
 
 
 class OperationRoomPatientsView(generics.ListAPIView):
     """Get patients in operation room"""
     serializer_class = PatientSerializer
     permission_classes = [IsAuthenticated]
-    
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'file_number', 'patient_id', 'nationality']
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+    filterset_class = PatientFilter
+
     def get_queryset(self):
-        return Patient.objects.filter(
+        queryset = Patient.objects.filter(
             case_type='operation'
-        ).order_by('-created_at')
+        )
+        # Search and ordering handled by filter_backends
+        return queryset
 
 
 class ProgressNoteListCreateView(generics.ListCreateAPIView):
@@ -292,3 +308,32 @@ class PredictNeonatalView(APIView):
         if isinstance(result, dict) and result.get("status") == 400:
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def general_indicators(request):
+    """General indicators for analytics dashboard"""
+    total_patients = Patient.objects.count()
+    saudi_nationals = Patient.objects.filter(nationality__iexact="saudi arabia").count()
+    non_saudi_nationals = Patient.objects.exclude(nationality__iexact="saudi arabia").count()
+    advanced_maternal = Patient.objects.filter(age__gte=35).count()
+    obesity_prevalence = Patient.objects.filter(bmi__gte=30).count()
+    primigravida = Patient.objects.filter(parity=0).count()
+    multipara = Patient.objects.filter(parity__gte=1).count()
+    booked_cases = Patient.objects.exclude(booking="unbooked").count()
+
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+
+    data = {
+        "total_deliveries": total_patients,
+        "saudi_nationals": {"count": saudi_nationals, "percent": percent(saudi_nationals, total_patients)},
+        "non_saudi_nationals": {"count": non_saudi_nationals, "percent": percent(non_saudi_nationals, total_patients)},
+        "advanced_maternal": {"count": advanced_maternal, "percent": percent(advanced_maternal, total_patients)},
+        "obesity_prevalence": {"count": obesity_prevalence, "percent": percent(obesity_prevalence, total_patients)},
+        "primigravida": {"count": primigravida, "percent": percent(primigravida, total_patients)},
+        "multipara": {"count": multipara, "percent": percent(multipara, total_patients)},
+        "booked_cases": {"count": booked_cases, "percent": percent(booked_cases, total_patients)},
+    }
+    return Response(data)
