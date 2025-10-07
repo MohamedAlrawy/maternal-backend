@@ -33,6 +33,12 @@ urlpatterns = [
     path("patients/<identifier>/predict_pph/", views.PredictPPHView.as_view(), name="predict_pph"),
     path("patients/<identifier>/predict_neonatal/", views.PredictNeonatalView.as_view(), name="predict_neonatal"),
 
-    # General Indicators
+    # Analytics Endpoints
     path('analytics/general-indicators/', views.general_indicators, name='general_indicators'),
+    path('analytics/nationality-map/', views.nationality_map, name='nationality_map'),
+    path('analytics/cs-indications/', views.cs_indications_counts, name='cs_indications_counts'),
+    path('analytics/risk-factors/', views.risk_factors, name='risk_factors'),
+    path('analytics/maternal-outcomes/', views.maternal_outcomes, name='maternal_outcomes'),
+    path('analytics/fetal-neonatal-outcomes/', views.fetal_neonatal_outcomes, name='fetal_neonatal_outcomes'),
+
 ]

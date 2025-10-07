@@ -337,3 +337,391 @@ def general_indicators(request):
         "booked_cases": {"count": booked_cases, "percent": percent(booked_cases, total_patients)},
     }
     return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def nationality_map(request):
+    """Return grouped nationality counts for map visualization"""
+    # Get top 5 nationalities (case-insensitive group by)
+    qs = (
+        Patient.objects.values('nationality')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:5]
+    )
+    # Static mapping for ISO_A3 and coordinates (extend as needed)
+    country_map = {
+        'saudi arabia': { 'code': 'SAU', 'coords': [45.0792, 23.8859] },
+        'egypt': { 'code': 'EGY', 'coords': [30.8025, 26.8206] },
+        'sudan': { 'code': 'SDN', 'coords': [30.2176, 15.5007] },
+        'yemen': { 'code': 'YEM', 'coords': [48.5164, 15.5527] },
+        'india': { 'code': 'IND', 'coords': [78.9629, 20.5937] },
+        'pakistan': { 'code': 'PAK', 'coords': [69.3451, 30.3753] },
+        # Add more as needed
+    }
+    result = []
+    for row in qs:
+        nat = (row['nationality'] or '').strip().lower()
+        info = country_map.get(nat, { 'code': 'OTH', 'coords': [0,0] })
+        result.append({
+            'code': info['code'],
+            'label': row['nationality'],
+            'count': row['count'],
+            'coords': info['coords'],
+        })
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cs_indications_counts(request):
+    """Return counts for CS indications for analytics bar chart"""
+    from .models import Patient
+    from django.db.models import Q
+    count = Patient.objects.all().count()
+    result = [
+        {
+            "label": "Non‑progress of labor",
+            "count": Patient.objects.filter(cs_indication__icontains="failure_to_progress").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="failure_to_progress").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Fetal distress",
+            "count": Patient.objects.filter(cs_indication__icontains="fetal_distress").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Transverse/unstable lie",
+            "count": Patient.objects.filter(
+                Q(presentation__icontains="transverse") |
+                Q(presentation__icontains="abnormal_lie_presentation_other_than_breech")
+            ).count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Previous CS",
+            "count": Patient.objects.filter(
+                Q(cs_indication__icontains="repeated_cs_in_labor") |
+                Q(cs_indication__icontains="repeated_cs")
+            ).count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Placenta previa/bleeding",
+            "count": Patient.objects.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Placental abruption",
+            "count": Patient.objects.filter(cs_indication__icontains="placental_abruption").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Breech presentation",
+            "count": Patient.objects.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+        },
+    ]
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def risk_factors(request):
+    """Return counts for maternal medical risk factors"""
+    from .models import Patient
+    from django.db.models import Q
+    
+    total_patients = Patient.objects.count()
+    
+    def count_with_condition(condition):
+        return Patient.objects.filter(menternal_medical__contains=[condition]).count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    risk_factors_data = [
+        {
+            "label": "Chronic hypertension",
+            "count": count_with_condition("Chronic hypertension"),
+            "percentage": percent(count_with_condition("Chronic hypertension"), total_patients)
+        },
+        {
+            "label": "Diabetes",
+            "count": count_with_condition("Diabetes"),
+            "percentage": percent(count_with_condition("Diabetes"), total_patients)
+        },
+        {
+            "label": "Epilepsy",
+            "count": count_with_condition("Epilepsy"),
+            "percentage": percent(count_with_condition("Epilepsy"), total_patients)
+        },
+        {
+            "label": "Cardiac disease",
+            "count": count_with_condition("Cardiac disease"),
+            "percentage": percent(count_with_condition("Cardiac disease"), total_patients)
+        },
+        {
+            "label": "Renal Disease",
+            "count": count_with_condition("Renal Disease"),
+            "percentage": percent(count_with_condition("Renal Disease"), total_patients)
+        },
+        {
+            "label": "History of anemia",
+            "count": count_with_condition("History of anemia"),
+            "percentage": percent(count_with_condition("History of anemia"), total_patients)
+        },
+        {
+            "label": "Autoimmune disease",
+            "count": count_with_condition("Autoimmune disease"),
+            "percentage": percent(count_with_condition("Autoimmune disease"), total_patients)
+        },
+        {
+            "label": "Thyroid disorder",
+            "count": count_with_condition("Thyroid disorder"),
+            "percentage": percent(count_with_condition("Thyroid disorder"), total_patients)
+        },
+        {
+            "label": "Thromboembolic event",
+            "count": count_with_condition("Thromboembolic event"),
+            "percentage": percent(count_with_condition("Thromboembolic event"), total_patients)
+        },
+    ]
+    
+    result = {
+        "risk_factors": risk_factors_data,
+        "total_patients": total_patients
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def maternal_outcomes(request):
+    """Return counts for maternal outcomes"""
+    from .models import Patient
+    from django.db.models import Q
+    
+    total_patients = Patient.objects.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # PPH Rate (>1000 mL)
+    pph_count = Patient.objects.filter(
+        Q(blood_loss="1001_1500") | Q(blood_loss="more_than_1500")
+    ).count()
+    
+    # Blood Transfusion Rate
+    blood_transfusion_count = Patient.objects.filter(blood_transfusion=True).count()
+    
+    # Maternal ICU Admission Rate
+    icu_admission_count = Patient.objects.filter(icu_admission=True).count()
+    
+    # Cesarean Hysterectomy Rate
+    cesarean_hysterectomy_count = Patient.objects.filter(ceasrean_hysterectomy=True).count()
+    
+    # Eclampsia
+    eclampsia_count = Patient.objects.filter(eclampsia=True).count()
+    
+    # HELLP Syndrome
+    hellp_count = Patient.objects.filter(hellp_syndrome=True).count()
+    
+    # Acute Kidney Injury
+    aki_count = Patient.objects.filter(acute_kidney_injury=True).count()
+    
+    # Severe PPH
+    severe_pph_count = Patient.objects.filter(sever_pph=True).count()
+    
+    # Prolonged Hospital Stay
+    prolonged_stay_count = Patient.objects.filter(prolonged_hospital_stay_more_4_days=True).count()
+    
+    # Uterine Rupture
+    uterine_rupture_count = Patient.objects.filter(cs_indication__icontains="uterine_rupture").count()
+    
+    # Readmission within 30d
+    readmission_count = Patient.objects.filter(readmission_within_30d=True).count()
+    
+    # VTE Postpartum
+    vte_count = Patient.objects.filter(vte_postpartum=True).count()
+    
+    # Infection/Endometritis
+    infection_count = Patient.objects.filter(infection_endometritis=True).count()
+    
+    # Wound Complication
+    wound_complication_count = Patient.objects.filter(wound_complication=True).count()
+    
+    maternal_outcomes_data = [
+        {
+            "label": "PPH Rate (>1000 mL)",
+            "count": pph_count,
+            "percentage": percent(pph_count, total_patients)
+        },
+        {
+            "label": "Blood Transfusion Rate",
+            "count": blood_transfusion_count,
+            "percentage": percent(blood_transfusion_count, total_patients)
+        },
+        {
+            "label": "Maternal ICU Admission Rate",
+            "count": icu_admission_count,
+            "percentage": percent(icu_admission_count, total_patients)
+        },
+        {
+            "label": "Cesarean Hysterectomy Rate",
+            "count": cesarean_hysterectomy_count,
+            "percentage": percent(cesarean_hysterectomy_count, total_patients)
+        },
+        {
+            "label": "Eclampsia",
+            "count": eclampsia_count,
+            "percentage": percent(eclampsia_count, total_patients)
+        },
+        {
+            "label": "HELLP Syndrome",
+            "count": hellp_count,
+            "percentage": percent(hellp_count, total_patients)
+        },
+        {
+            "label": "Acute Kidney Injury",
+            "count": aki_count,
+            "percentage": percent(aki_count, total_patients)
+        },
+        {
+            "label": "Severe PPH",
+            "count": severe_pph_count,
+            "percentage": percent(severe_pph_count, total_patients)
+        },
+        {
+            "label": "Prolonged Hospital Stay",
+            "count": prolonged_stay_count,
+            "percentage": percent(prolonged_stay_count, total_patients)
+        },
+        {
+            "label": "Uterine Rupture",
+            "count": uterine_rupture_count,
+            "percentage": percent(uterine_rupture_count, total_patients)
+        },
+        {
+            "label": "Readmission within 30d",
+            "count": readmission_count,
+            "percentage": percent(readmission_count, total_patients)
+        },
+        {
+            "label": "VTE Postpartum",
+            "count": vte_count,
+            "percentage": percent(vte_count, total_patients)
+        },
+        {
+            "label": "Infection/Endometritis",
+            "count": infection_count,
+            "percentage": percent(infection_count, total_patients)
+        },
+        {
+            "label": "Wound Complication",
+            "count": wound_complication_count,
+            "percentage": percent(wound_complication_count, total_patients)
+        },
+    ]
+    
+    result = {
+        "maternal_outcomes": maternal_outcomes_data,
+        "total_patients": total_patients
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetal_neonatal_outcomes(request):
+    """Return counts for fetal & neonatal outcomes"""
+    from .models import Patient
+    from django.db.models import Q
+    
+    total_patients = Patient.objects.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # Stillbirth (IUFD) Rate
+    stillbirth_count = Patient.objects.filter(obstetric_history__contains=["Stillbirth"]).count()
+    # Neonatal Death Rate
+    neonatal_death_count = Patient.objects.filter(neonatal_death=True).count()
+    # Preterm Birth Rate (<37w)
+    preterm_birth_count = Patient.objects.filter(current_pregnancy_fetal__contains=["Preterm labor"]).count()
+    # NICU Admission Rate
+    nicu_admission_count = Patient.objects.filter(nicu_admission=True).count()
+    # HIE Rate
+    hie_count = Patient.objects.filter(hie=True).count()
+    # Congenital Anomalies Rate
+    congenital_anomalies_count = Patient.objects.filter(congenital_anomalies=True).count()
+    # Birth Injuries Rate
+    birth_injuries_count = Patient.objects.filter(birth_injuries=True).count()
+    # Low Birth Weight (<2500g)
+    low_birth_weight_count = Patient.objects.filter(birth_weight__lt=2500).count()
+    # Macrosomia (≥4000g)
+    macrosomia_count = Patient.objects.filter(birth_weight__gte=4000).count()
+    # Booked Cases Share
+    booked_cases_count = Patient.objects.exclude(booking="unbooked").count()
+    
+    outcomes_data = [
+        {
+            "label": "Stillbirth (IUFD) Rate",
+            "count": stillbirth_count,
+            "percentage": percent(stillbirth_count, total_patients)
+        },
+        {
+            "label": "Neonatal Death Rate",
+            "count": neonatal_death_count,
+            "percentage": percent(neonatal_death_count, total_patients)
+        },
+        {
+            "label": "Preterm Birth Rate (<37w)",
+            "count": preterm_birth_count,
+            "percentage": percent(preterm_birth_count, total_patients)
+        },
+        {
+            "label": "NICU Admission Rate",
+            "count": nicu_admission_count,
+            "percentage": percent(nicu_admission_count, total_patients)
+        },
+        {
+            "label": "HIE Rate",
+            "count": hie_count,
+            "percentage": percent(hie_count, total_patients)
+        },
+        {
+            "label": "Congenital Anomalies Rate",
+            "count": congenital_anomalies_count,
+            "percentage": percent(congenital_anomalies_count, total_patients)
+        },
+        {
+            "label": "Birth Injuries Rate",
+            "count": birth_injuries_count,
+            "percentage": percent(birth_injuries_count, total_patients)
+        },
+        {
+            "label": "Low Birth Weight (<2500g)",
+            "count": low_birth_weight_count,
+            "percentage": percent(low_birth_weight_count, total_patients)
+        },
+        {
+            "label": "Macrosomia (≥4000g)",
+            "count": macrosomia_count,
+            "percentage": percent(macrosomia_count, total_patients)
+        },
+        {
+            "label": "Booked Cases Share",
+            "count": booked_cases_count,
+            "percentage": percent(booked_cases_count, total_patients)
+        },
+    ]
+    
+    result = {
+        "fetal_neonatal_outcomes": outcomes_data,
+        "total_patients": total_patients
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
