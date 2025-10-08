@@ -137,14 +137,14 @@ def call_ai_agent(query):
     Uses Anthropic Claude API for medical questions.
     Falls back to helpful message if API fails.
     """
-    api_key = "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"
+    test_api_key = "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"
     
-    if not api_key or api_key == "your-api-key-here":
+    if not test_api_key or test_api_key == "your-api-key-here":
         return "I'm a medical assistant chatbot. I can help answer questions about maternal health, pregnancy care, labour procedures, and more. Please add more questions to my knowledge base for better responses."
 
     url = "https://api.anthropic.com/v1/messages"
     headers = {
-        "x-api-key": api_key,
+        "x-api-key": test_api_key,
         "content-type": "application/json",
         "anthropic-version": "2023-06-01"
     }
@@ -189,7 +189,7 @@ def call_ai_agent(query):
 """
 
     curl https://api.anthropic.com/v1/messages \
-        --header "x-api-key: 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" \
+        --header "test_api_key: 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" \
         --header "anthropic-version: 2023-06-01" \
         --header "content-type: application/json" \
         --data \
