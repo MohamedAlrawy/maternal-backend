@@ -137,7 +137,7 @@ def call_ai_agent(query):
     Uses Anthropic Claude API for medical questions.
     Falls back to helpful message if API fails.
     """
-    test_api_key = "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"
+    test_api_key = ""
     
     if not test_api_key or test_api_key == "your-api-key-here":
         return "I'm a medical assistant chatbot. I can help answer questions about maternal health, pregnancy care, labour procedures, and more. Please add more questions to my knowledge base for better responses."
@@ -177,27 +177,3 @@ def call_ai_agent(query):
             return "I apologize, but I'm having trouble processing your request. Please try rephrasing your question or contact a healthcare professional for urgent matters."
     except Exception as e:
         return f"I'm here to help with medical questions. However, I'm currently having connectivity issues. Please try again or consult with a healthcare professional."
-
-
-
-
-
-
-
-
-
-"""
-
-    curl https://api.anthropic.com/v1/messages \
-        --header "test_api_key: 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" \
-        --header "anthropic-version: 2023-06-01" \
-        --header "content-type: application/json" \
-        --data \
-    '{
-        "model": "claude-sonnet-4-20250514",
-        "max_tokens": 1024,
-        "messages": [
-            {"role": "user", "content": "Hello, world"}
-        ]
-    }'
-"""
