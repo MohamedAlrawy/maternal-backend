@@ -376,6 +376,8 @@ class Patient(models.Model):
         if self.height and self.weight and not self.bmi:
             height_m = self.height / 100
             self.bmi = round(float(self.weight) / (height_m ** 2), 2)
+        if "Preterm labor < 37 weeks" in self.current_pregnancy_fetal:
+            self.preterm_birth_less_37_weeks = True
         super().save(*args, **kwargs)
 
 

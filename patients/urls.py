@@ -40,5 +40,9 @@ urlpatterns = [
     path('analytics/risk-factors/', views.risk_factors, name='risk_factors'),
     path('analytics/maternal-outcomes/', views.maternal_outcomes, name='maternal_outcomes'),
     path('analytics/fetal-neonatal-outcomes/', views.fetal_neonatal_outcomes, name='fetal_neonatal_outcomes'),
+    path('analytics/vbac-success-rate/', views.vbac_success_rate, name='vbac_success_rate'),
+    path('analytics/primary-cs-rate/', views.primary_cs_rate, name='primary_cs_rate'),
+    path('analytics/type-of-cs/', views.cs_type_counts, name='cs_type_counts'),
+    path('analytics/special-conditions/', views.special_conditions, name='special_conditions'),
 
 ]

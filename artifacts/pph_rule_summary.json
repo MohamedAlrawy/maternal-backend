@@ -1,0 +1,48 @@
+{
+  "rules": [
+    {
+      "weight": 20,
+      "reason": "History of prior PPH (15-25%)"
+    },
+    {
+      "weight": 12,
+      "reason": "Grand multipara (>=5) (10-15%)"
+    },
+    {
+      "weight": 12,
+      "reason": "Multiple gestation (10-15%)"
+    },
+    {
+      "weight": 9,
+      "reason": "Polyhydramnios (8-10%)"
+    },
+    {
+      "weight": 10,
+      "reason": "Estimated fetal weight >=4000g (8-12%)"
+    },
+    {
+      "weight": 12,
+      "reason": "History of placental abruption (10-15%)"
+    },
+    {
+      "weight": 15,
+      "reason": "Placenta previa (10-20%)"
+    },
+    {
+      "weight": 5,
+      "reason": "Severe anemia (Hb<7) - indirect impact"
+    },
+    {
+      "weight": 7,
+      "reason": "Pre-eclampsia (5-10%)"
+    },
+    {
+      "weight": 7,
+      "reason": "Multiple prior CS (>1) (5-10%)"
+    },
+    {
+      "weight": 7,
+      "reason": "Obstructed/prolonged labor (5-10%)"
+    }
+  ]
+}

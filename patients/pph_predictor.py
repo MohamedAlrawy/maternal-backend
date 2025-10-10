@@ -1,18 +1,11 @@
 """
-PPH predictor (direct feature set) - regenerated robust version
+Updated PPH predictor (direct feature set) with revised deterministic rules.
 
-Features:
-- Accepts identifier (PK/int or numeric string), file_number, patient_id,
-  OR a payload dict/list or JSON string representing patient data.
-- Applies deterministic clinical rules first (high-confidence short-circuit).
-- If rules don't decide, builds feature row from available direct fields and relies on
-  model imputers for missing numeric values (tolerant).
-- Returns detailed reason: deterministic rule reasons or top feature importances.
-- Returns structured errors (status 400) when payload is invalid or insufficient.
-
-Placement: patients/pph_predictor_direct.py
+File: patients/pph_predictor_direct.py
+This version updates the deterministic PPH_RULES to match the provided impacts and explanations.
+Each rule now returns weight_percent matching the clinical impact ranges. The predictor
+continues to short-circuit when high-confidence rules apply, otherwise it uses the saved model.
 """
-
 import os
 import json
 import re
@@ -33,7 +26,6 @@ MODEL_PATH = os.path.join(getattr(settings, 'BASE_DIR', '.'), 'artifacts', MODEL
 
 # --- Helpers ---
 def safe_parse_list(cell):
-    """Normalize many encodings into list[str]."""
     if cell is None:
         return []
     if isinstance(cell, (list, tuple)):
@@ -41,13 +33,11 @@ def safe_parse_list(cell):
     if isinstance(cell, dict):
         return [str(v).strip() for v in cell.values() if str(v).strip()!='']
     if isinstance(cell, str):
-        # try JSON
         try:
             parsed = json.loads(cell)
             if isinstance(parsed, list):
                 return [str(x).strip() for x in parsed if str(x).strip()!='']
             if isinstance(parsed, dict):
-                # return dict values as list
                 return [str(v).strip() for v in parsed.values() if str(v).strip()!='']
         except Exception:
             pass
@@ -56,7 +46,6 @@ def safe_parse_list(cell):
     return []
 
 def contains_any(lst, keys):
-    """Case-insensitive substring match between keys and list elements."""
     if not lst:
         return False
     low = [str(s).lower() for s in lst]
@@ -66,59 +55,7 @@ def contains_any(lst, keys):
             return True
     return False
 
-def _ensure_payload_dict(payload):
-    """
-    Normalize different payload types into a dict.
-    Accepts dict, list (wrapped), JSON string, or Django Patient-like object.
-    Returns (payload_dict, warnings_list) or raises ValueError for unsupported types.
-    """
-    warnings = []
-    # dict -> ok
-    if isinstance(payload, dict):
-        return payload, warnings
-    # list -> wrap
-    if isinstance(payload, list):
-        return {'list_payload': payload}, warnings
-    # string -> try JSON
-    if isinstance(payload, str):
-        s = payload.strip()
-        if s.startswith('{') or s.startswith('['):
-            try:
-                parsed = json.loads(s)
-                if isinstance(parsed, dict):
-                    return parsed, warnings
-                if isinstance(parsed, list):
-                    return {'list_payload': parsed}, warnings
-            except Exception:
-                raise ValueError("Payload string is not valid JSON")
-        raise ValueError("Payload is a plain string (not JSON). Provide dict or JSON string.")
-    # Patient-like object -> best-effort attribute extraction
-    try:
-        if hasattr(payload, '__dict__') or hasattr(payload, 'pk') or hasattr(payload, 'id'):
-            keys = NUMERIC_FEATURES + CATEGORICAL_FEATURES + ['menternal_medical','obstetric_history','current_pregnancy_menternal','social','liquor','hb_g_dl','total_number_of_cs','parity']
-            d = {}
-            for k in keys:
-                try:
-                    d[k] = getattr(payload, k)
-                except Exception:
-                    d[k] = None
-            return d, warnings
-    except Exception:
-        pass
-    raise ValueError("Unsupported payload type; expected dict, JSON string, list, or Patient instance")
-
-# --- Deterministic rules (weights & reasons) ---
-PPH_RULES = [
-    (lambda r: contains_any(_safe_get_list(r, 'obstetric_history'), ['postpartum hemorrhage','pph']), 20, "History of PPH (prior)"),
-    (lambda r: (r.get('total_number_of_cs', 0) >= 2), 15, "Multiple prior CS"),
-    (lambda r: contains_any(_safe_get_list(r, 'current_pregnancy_menternal'), ['placenta previa','placenta praevia']), 20, "Placenta previa"),
-    (lambda r: contains_any(_safe_get_list(r, 'current_pregnancy_menternal'), ['placenta abruption','abruption']), 20, "Placental abruption"),
-    (lambda r: contains_any(_safe_get_list(r, 'liquor_flags'), ['polyhydramnios','polihydramnios']), 10, "Polyhydramnios"),
-    (lambda r: (not pd.isna(r.get('estimated_fetal_weight_by_gm')) and float(r.get('estimated_fetal_weight_by_gm', 0)) > 4000), 10, "Estimated fetal weight >=4000g"),
-]
-
 def _safe_get_list(d, key):
-    """Return list for key from dict-like payload; tolerate non-dict input."""
     try:
         if not isinstance(d, dict):
             return []
@@ -126,19 +63,68 @@ def _safe_get_list(d, key):
     except Exception:
         return []
 
+def extract_cs_count_from_obstetric(obst_list):
+    if not obst_list:
+        return 0
+    for item in obst_list:
+        s=str(item).lower()
+        if 'previous c-section' in s or 'previous cs' in s or 'previous c section' in s:
+            return 1
+        if 'multiple c-sections' in s or 'multiple cs' in s or 'multiple c section' in s:
+            # try capture number
+            m = re.search(r'(\d+)', s)
+            if m:
+                try:
+                    return int(m.group(1))
+                except:
+                    pass
+            # else return 2 to indicate >1
+            return 2
+    return 0
+
+# --- Deterministic rules (weights & reasons) updated per user table ---
+# Each tuple: (condition_lambda, weight_percent, reason_text)
+PPH_RULES = [
+    # History of PPH (15-25%)
+    (lambda r: contains_any(_safe_get_list(r, 'obstetric_history'), ['postpartum hemorrhage','pph']), 20, "History of postpartum hemorrhage (prior) — recurrence risk 15–25%"),
+    # Grand multipara >=5 (10-15%)
+    (lambda r: (contains_any(_safe_get_list(r, 'social'), ['grand multipara']) or (r.get('parity') is not None and str(r.get('parity'))!='' and float(r.get('parity'))>=5)), 12, "Grand multipara (>=5) — uterine overdistension, 10–15%"),
+    # Multiple gestation in current_pregnancy_menternal (10-15%)
+    (lambda r: contains_any(_safe_get_list(r, 'current_pregnancy_menternal'), ['multiple gestation','twin','twins','triplet']), 12, "Multiple gestation (twins/triplets) — 10–15%"),
+    # Polyhydramnios in liquor (8-10%)
+    (lambda r: contains_any(_safe_get_list(r, 'liquor'), ['polyhydramnios','polihydraminos','polihydramnios']), 9, "Polyhydramnios — uterine overdistension, 8–10%"),
+    # Estimated fetal weight > 4000g (8-12%)
+    (lambda r: (not pd.isna(r.get('estimated_fetal_weight_by_gm')) and float(r.get('estimated_fetal_weight_by_gm', 0)) > 4000), 10, "Estimated fetal weight >=4000g — macrosomia risk, 8–12%"),
+    # History of placenta abruption in obstetric_history (10-15%)
+    (lambda r: contains_any(_safe_get_list(r, 'obstetric_history'), ['placenta abruption','abruption']), 12, "History of placenta abruption — coagulopathy/severe hemorrhage, 10–15%"),
+    # Placenta previa/abruption in current_pregnancy_menternal (10-20%)
+    (lambda r: contains_any(_safe_get_list(r, 'current_pregnancy_menternal'), ['placenta previa','placenta praevia','placenta abruption','abruption']), 15, "Placenta previa/abruption in current pregnancy — 10–20%"),
+    # Severe anemia (Hb<7) indirect impact (flag)
+    (lambda r: (not pd.isna(r.get('hb_g_dl')) and float(r.get('hb_g_dl', 999)) < 7) or contains_any(_safe_get_list(r, 'current_pregnancy_menternal'), ['severe anemia','hb<7','hb <7']), 3, "Severe anemia (Hb<7) — indirect impact on morbidity (flag)"),
+    # Pre-eclampsia (5-10%)
+    (lambda r: contains_any(_safe_get_list(r, 'current_pregnancy_menternal'), ['pre-eclampsia','preeclampsia','pre eclampsia']), 7, "Pre-eclampsia — endothelial dysfunction/coagulopathy, 5–10%"),
+    # Multiple c-sections (>1) in obstetric_history (5-10%)
+    (lambda r: (r.get('total_number_of_cs',0) > 1) or contains_any(_safe_get_list(r, 'obstetric_history'), ['multiple c-sections','multiple cs','two c-sections','2 c-section','>1 c-section']), 7, "Multiple prior C-sections (>1) — adhesions/abnormal placentation, 5–10%"),
+    # Obstructed/prolonged labor (5-10%)
+    (lambda r: contains_any(_safe_get_list(r, 'obstetric_history'), ['obstructed','prolonged labor','prolonged']), 7, "Obstructed or prolonged labor — uterine exhaustion/atony, 5–10%"),
+]
+
 def pph_deterministic_check(rowdict):
     matches = []
     total = 0
     reasons = []
+    print(rowdict)
     for cond, weight, reason in PPH_RULES:
+        print(cond(rowdict))
+        print(cond, weight, reason)
         try:
             if cond(rowdict):
-                matches.append((weight, reason))
+                matches.append({'reason': reason, 'weight_percent': weight})
                 total += weight
                 reasons.append(reason)
         except Exception:
             continue
-    return (len(matches) > 0), total, reasons
+    return matches, total, reasons
 
 # --- Feature lists (must align with training) ---
 NUMERIC_FEATURES = ['age','parity','bmi','total_number_of_cs','estimated_fetal_weight_by_gm','hb_g_dl','platelets_x10e9l','labor_duration_hours']
@@ -152,7 +138,6 @@ def load_pipeline(model_path=MODEL_PATH):
     return joblib.load(model_path)
 
 def build_X_row_from_payload(payload):
-    """Construct single-row DataFrame from payload; binary features appended as columns."""
     rec = {}
     for k in NUMERIC_FEATURES + CATEGORICAL_FEATURES:
         rec[k] = payload.get(k, None)
@@ -164,24 +149,14 @@ def build_X_row_from_payload(payload):
     return X_row[feature_order]
 
 # --- Main prediction functions ---
-def predict_pph_direct_payload(raw_payload, threshold=0.5, rule_threshold=80):
-    """
-    raw_payload: dict, JSON string, list, or Patient-like object.
-    Returns dict with keys: prediction, probability, reason, source (or error).
-    """
-    # Normalize payload
-    try:
-        payload, warnings = _ensure_payload_dict(raw_payload)
-    except ValueError as e:
-        return {'error': f'Invalid payload: {str(e)}', 'source': 'payload', 'status': 400}
-
+def predict_pph_direct_payload(payload, threshold=0.5, rule_threshold=80):
     # Normalize list fields and derive flags
     list_fields = ['menternal_medical','obstetric_history','current_pregnancy_menternal','social','liquor']
     for lf in list_fields:
         payload[lf] = safe_parse_list(payload.get(lf, []))
     payload['liquor_flags'] = [s.lower() for s in safe_parse_list(payload.get('liquor', [])) if isinstance(s, str)]
 
-    # Derived boolean flags (best-effort)
+    # derived boolean flags
     payload['history_pph'] = contains_any(payload.get('obstetric_history', []), ['postpartum hemorrhage','pph'])
     payload['grand_multipara'] = contains_any(payload.get('social', []), ['grand multipara']) or (payload.get('parity') is not None and str(payload.get('parity'))!='' and float(payload.get('parity'))>=5)
     payload['multiple_gestation'] = contains_any(payload.get('current_pregnancy_menternal', []), ['multiple gestation','twin','twins','triplet'])
@@ -192,7 +167,11 @@ def predict_pph_direct_payload(raw_payload, threshold=0.5, rule_threshold=80):
     payload['history_transfusion'] = contains_any(payload.get('menternal_medical', []), ['blood transfusion','transfusion'])
     payload['obstructed_prolonged'] = contains_any(payload.get('obstetric_history', []), ['obstructed','prolonged labor','prolonged'])
 
-    # Coerce numeric where possible (tolerant)
+    # infer total_number_of_cs from obstetric_history when missing
+    if payload.get('total_number_of_cs') in (None, '', np.nan):
+        payload['total_number_of_cs'] = extract_cs_count_from_obstetric(payload.get('obstetric_history', []))
+
+    # Coerce numeric where possible
     for k in NUMERIC_FEATURES:
         try:
             v = payload.get(k)
@@ -203,83 +182,100 @@ def predict_pph_direct_payload(raw_payload, threshold=0.5, rule_threshold=80):
         except Exception:
             payload[k] = None
 
-    # Deterministic rules first
-    matched, weight, reasons = pph_deterministic_check(payload)
-    if matched and weight >= rule_threshold:
-        return {'prediction': 'PPH', 'probability': min(0.99, weight/100.0), 'reason': '; '.join(reasons), 'source': 'rule', 'pph': True, 'warnings': warnings if warnings else None}
+    # Apply deterministic rules first
+    matches, total_weight, reasons = pph_deterministic_check(payload)
+    print(matches)
+    print(total_weight)
+    print(reasons)
+    if matches:
+        # return detailed reasons and summed percent
+        reason_details = matches
+        total_pct = min(99, max(0, int(round(total_weight))))
+        if total_pct >= rule_threshold:
+            prob = total_pct / 100.0
+            return {
+                'prediction':'PPH',
+                'probability': float(prob),
+                'reason': '; '.join([m['reason'] for m in matches]),
+                'reason_details': reason_details,
+                'total_rule_percent': total_pct,
+                'source':'rule'
+            }
+    else:
+        return {
+            'prediction':'NO_PPH',
+            'probability': 0.0,
+            'reason': '',
+            'reason_details': matches,
+            'total_rule_percent': min(99, max(0, int(round(total_weight)))),
+            'source':'rule'
+        }
 
-    # Require at least one numeric and one categorical to proceed (tolerant - but avoid completely empty input)
-    has_numeric = any(payload.get(k) not in (None, '') for k in NUMERIC_FEATURES)
-    has_categorical = any(payload.get(k) not in (None, '') for k in CATEGORICAL_FEATURES)
-    if not has_numeric or not has_categorical:
-        missing_fields = [k for k in (NUMERIC_FEATURES + CATEGORICAL_FEATURES) if payload.get(k) in (None, '')]
-        return {'error': 'Missing required direct fields for PPH prediction', 'missing_fields': missing_fields, 'status': 400, 'source': 'insufficient_data', 'warnings': warnings if warnings else None}
+    # require at least some data to run model
+    has_any = any(payload.get(f) not in (None, '') for f in NUMERIC_FEATURES + CATEGORICAL_FEATURES)
+    if not has_any:
+        return {'error':'Insufficient data for model prediction','source':'insufficient_data','status':400}
 
     # Load pipeline
     try:
         pipeline = load_pipeline()
-    except FileNotFoundError as fnf:
-        return {'error': str(fnf), 'source': 'model_missing'}
+    except FileNotFoundError as e:
+        return {'error': str(e), 'source':'model_missing'}
 
-    # Build row and predict
     X_row = build_X_row_from_payload(payload)
-    try:
-        probs = None
-        if hasattr(pipeline, 'predict_proba'):
-            probs = pipeline.predict_proba(X_row)
-        if probs is not None and probs.ndim == 2 and probs.shape[1] > 1:
-            proba = float(probs[:,1][0])
-            pred = 'PPH' if proba >= threshold else 'NO_PPH'
-            source = 'model'
-        else:
-            clf = pipeline.named_steps.get('classifier', None)
-            if clf is not None and hasattr(clf, 'classes_') and len(clf.classes_) == 1:
-                proba = 1.0 if clf.classes_[0] in (1,'1',True) else 0.0
-                pred = 'PPH' if proba >= threshold else 'NO_PPH'
-                source = 'model'
-            else:
-                pred_label = pipeline.predict(X_row)[0]
-                proba = None
-                pred = 'PPH' if int(pred_label) == 1 else 'NO_PPH'
-                source = 'model'
 
-        # Reason: deterministic (below threshold) or top feature importances
-        if matched and weight > 0 and weight < rule_threshold:
-            reason = 'Rule signals: ' + '; '.join(reasons)
-        else:
-            try:
-                clf = pipeline.named_steps['classifier']
-                preproc = pipeline.named_steps['preprocessor']
-                try:
-                    cat_names = list(preproc.get_feature_names_out())
-                except Exception:
-                    ohe = preproc.named_transformers_['cat'].named_steps['ohe']
-                    cat_names = list(ohe.get_feature_names_out(CATEGORICAL_FEATURES))
-                feature_names = NUMERIC_FEATURES + list(cat_names) + BINARY_FEATURES
-                importances = clf.feature_importances_
-                feat_imp = sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)
-                top_features = [f"{name} ({imp:.3f})" for name, imp in feat_imp[:4]]
-                reason = f"Top influencing factors: {', '.join(top_features)}"
-            except Exception:
-                reason = "Model-based prediction"
+    # predict
+    # try:
+    #     proba = None
+    #     if hasattr(pipeline, 'predict_proba'):
+    #         probs = pipeline.predict_proba(X_row)
+    #         if probs.ndim == 2 and probs.shape[1] > 1:
+    #             proba = float(probs[:,1][0])
+    #     if proba is None:
+    #         # fallback to predict label
+    #         label = pipeline.predict(X_row)[0]
+    #         proba = 1.0 if int(label) == 1 else 0.0
+    #     pred = 'PPH' if proba >= threshold else 'NO_PPH'
+    #     # reason: either rule suggestions (low weight) or model top features
+    #     if matches and total_weight>0:
+    #         reason = 'Rule signals: ' + '; '.join(reasons)
+    #     else:
+    #         try:
+    #             clf = pipeline.named_steps.get('classifier', None)
+    #             preproc = pipeline.named_steps.get('preprocessor', None)
+    #             feat_names = None
+    #             if preproc is not None:
+    #                 try:
+    #                     feat_names = list(preproc.get_feature_names_out())
+    #                 except Exception:
+    #                     # best-effort: build names from categorical OHE
+    #                     try:
+    #                         ohe = preproc.named_transformers_['cat'].named_steps['ohe']
+    #                         cat_names = ohe.get_feature_names_out(CATEGORICAL_FEATURES)
+    #                         feat_names = NUMERIC_FEATURES + list(cat_names) + BINARY_FEATURES
+    #                     except Exception:
+    #                         feat_names = NUMERIC_FEATURES + CATEGORICAL_FEATURES + BINARY_FEATURES
+    #             else:
+    #                 feat_names = NUMERIC_FEATURES + CATEGORICAL_FEATURES + BINARY_FEATURES
+    #             importances = clf.feature_importances_ if clf is not None and hasattr(clf, 'feature_importances_') else None
+    #             if importances is not None and feat_names is not None:
+    #                 pairs = sorted(zip(feat_names, importances), key=lambda x: x[1], reverse=True)[:4]
+    #                 reason = 'Top factors: ' + ', '.join([f"{n} ({imp:.3f})" for n,imp in pairs])
+    #             else:
+    #                 reason = 'Model-based prediction'
+    #         except Exception:
+    #             reason = 'Model-based prediction'
+    #     return {'prediction': pred, 'probability': proba, 'reason': reason, 'source':'model', 'rules': matches}
+    # except Exception as e:
+    #     return {'error': f'Prediction failed: {str(e)}', 'source':'predict'}
 
-        return {'prediction': pred, 'probability': proba, 'reason': reason, 'source': source, 'pph': True if pred == 'PPH' else False, 'warnings': warnings if warnings else None}
-    except Exception as e:
-        return {'error': f'Prediction failed: {str(e)}', 'source': 'predict'}
-
-# --- Identifier helper to accept payloads or lookups ---
-def predict_pph_by_identifier(identifier, threshold=0.5, rule_threshold=80):
-    """
-    Accepts:
-      - PK (int) or numeric string
-      - file_number (string)
-      - patient_id (string)
-      - OR a payload dict/list or JSON string (in which case prediction runs on the payload without DB lookup)
-    """
-    # If identifier looks like payload (dict/list or JSON string starting with '{' or '[') -> treat as payload
+# --- Identifier helper ---
+def predict_pph_by_identifier(identifier, threshold=0.5, rule_threshold=5):
+    # payload-like
     if isinstance(identifier, dict) or isinstance(identifier, list) or (isinstance(identifier, str) and identifier.strip().startswith('{')):
         return predict_pph_direct_payload(identifier, threshold=threshold, rule_threshold=rule_threshold)
-
+    if Patient is None:
+        return {'error':'Patient model not importable','source':'db'}
     patient = None
     try:
         if isinstance(identifier, int) or (isinstance(identifier, str) and str(identifier).isdigit()):
@@ -287,29 +283,23 @@ def predict_pph_by_identifier(identifier, threshold=0.5, rule_threshold=80):
                 patient = Patient.objects.get(pk=int(identifier))
             except Exception:
                 patient = None
-
         if patient is None:
             try:
                 patient = Patient.objects.get(file_number=identifier)
             except Exception:
                 patient = None
-
         if patient is None:
             try:
                 patient = Patient.objects.get(patient_id=identifier)
             except Exception:
                 patient = None
     except Exception as e:
-        return {'error': f'Error looking up Patient: {str(e)}', 'source': 'db'}
-
+        return {'error': f'Error looking up Patient: {str(e)}', 'source':'db'}
     if patient is None:
-        return {'error': f'Patient not found for identifier: {identifier}', 'status': 404, 'source': 'not_found'}
-
-    # convert patient object to payload dict and predict
+        return {'error': f'Patient not found for identifier: {identifier}', 'status':404, 'source':'not_found'}
     payload = patient_to_payload(patient)
     return predict_pph_direct_payload(payload, threshold=threshold, rule_threshold=rule_threshold)
 
-# --- Patient -> payload converter ---
 def patient_to_payload(patient):
     payload = {}
     simple_fields = ['id','age','parity','bmi','total_number_of_cs','estimated_fetal_weight_by_gm','hb_g_dl','platelets_x10e9l','labor_duration_hours','type_of_labor','mode_of_delivery','placenta_location','rupture_duration_hour','type_of_cs','perineum_integrity','instrumental_delivery']
@@ -323,8 +313,8 @@ def patient_to_payload(patient):
     for col in json_list_cols:
         raw = getattr(patient, col, None)
         payload[col] = safe_parse_list(raw)
+    # derive flags and coerce numbers
     payload['liquor_flags'] = [s.lower() for s in safe_parse_list(payload.get('liquor', [])) if isinstance(s, str)]
-    # derived flags
     payload['history_pph'] = contains_any(payload.get('obstetric_history', []), ['postpartum hemorrhage','pph'])
     payload['grand_multipara'] = contains_any(payload.get('social', []), ['grand multipara']) or (payload.get('parity') is not None and str(payload.get('parity'))!='' and float(payload.get('parity'))>=5)
     payload['multiple_gestation'] = contains_any(payload.get('current_pregnancy_menternal', []), ['multiple gestation','twin','twins','triplet'])
@@ -334,7 +324,7 @@ def patient_to_payload(patient):
     payload['severe_anemia'] = True if (payload.get('hb_g_dl') is not None and str(payload.get('hb_g_dl'))!='' and float(payload.get('hb_g_dl'))<7) else False
     payload['history_transfusion'] = contains_any(payload.get('menternal_medical', []), ['blood transfusion','transfusion'])
     payload['obstructed_prolonged'] = contains_any(payload.get('obstetric_history', []), ['obstructed','prolonged labor','prolonged'])
-    # coerce numeric where possible
+    # coerce numeric
     for k in NUMERIC_FEATURES:
         try:
             if payload.get(k) is not None and str(payload.get(k))!='':
@@ -343,4 +333,7 @@ def patient_to_payload(patient):
                 payload[k] = None
         except Exception:
             payload[k] = None
+    # infer cs count
+    if payload.get('total_number_of_cs') in (None, '', np.nan):
+        payload['total_number_of_cs'] = extract_cs_count_from_obstetric(payload.get('obstetric_history', []))
     return payload

@@ -137,7 +137,7 @@ def call_ai_agent(query):
     Uses Anthropic Claude API for medical questions.
     Falls back to helpful message if API fails.
     """
-    test_api_key = ""
+    test_api_key = "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"
     
     if not test_api_key or test_api_key == "your-api-key-here":
         return "I'm a medical assistant chatbot. I can help answer questions about maternal health, pregnancy care, labour procedures, and more. Please add more questions to my knowledge base for better responses."

@@ -725,3 +725,131 @@ def fetal_neonatal_outcomes(request):
     }
     
     return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def vbac_success_rate(request):
+    """Return monthly VBAC success rates"""
+    from .models import Patient
+    from django.db.models import Count
+    from django.db.models.functions import TruncMonth
+    
+    # Get VBAC data grouped by month
+    vbac_data = (
+        Patient.objects
+        .filter(vbac=True)
+        .annotate(month=TruncMonth('time_of_delivery'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    # Format data for chart
+    result = []
+    for item in vbac_data:
+        if item['month']:
+            result.append({
+                'month': item['month'].strftime('%Y-%m'),
+                'month_label': item['month'].strftime('%B %Y'),
+                'count': item['count']
+            })
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def primary_cs_rate(request):
+    """Return monthly primary CS rates (first-time cesarean sections)"""
+    from .models import Patient
+    from django.db.models import Count
+    from django.db.models.functions import TruncMonth
+    
+    # Get primary CS data grouped by month
+    # Primary CS = total_number_of_cs is '0' and mode_of_delivery is 'cs'
+    primary_cs_data = (
+        Patient.objects
+        .filter(total_number_of_cs='0', mode_of_delivery='cs')
+        .annotate(month=TruncMonth('time_of_delivery'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    # Format data for chart
+    result = []
+    for item in primary_cs_data:
+        if item['month']:
+            result.append({
+                'month': item['month'].strftime('%Y-%m'),
+                'month_label': item['month'].strftime('%B %Y'),
+                'count': item['count']
+            })
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cs_type_counts(request):
+    """Return counts for Emergency vs Elective C-sections."""
+    from .models import Patient
+    total_cs = Patient.objects.filter(mode_of_delivery__iexact='cs').count()
+    emergency_cs = Patient.objects.filter(mode_of_delivery__iexact='cs', type_of_cs__iexact='emergency').count()
+    elective_cs = Patient.objects.filter(mode_of_delivery__iexact='cs', type_of_cs__iexact='elective').count()
+
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+
+    result = [
+        {
+            'label': 'Emergency CS',
+            'count': emergency_cs,
+            'percentage': percent(emergency_cs, total_cs),
+        },
+        {
+            'label': 'Elective CS',
+            'count': elective_cs,
+            'percentage': percent(elective_cs, total_cs),
+        },
+        {
+            'label': 'All CS',
+            'count': total_cs,
+            'percentage': 100,
+        }
+    ]
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def special_conditions(request):
+    """Bar chart special conditions: recurrent miscarriage, multiple gestation, GDM, Pre-eclampsia, severe anemia, placenta previa/abruption, IVF/ICSI, non-cephalic, IUGR."""
+    from .models import Patient
+    total_patients = Patient.objects.count()
+    def percent(count):
+        return round((count / total_patients) * 100, 2) if total_patients else 0
+
+    recurrent_miscarriage = Patient.objects.filter(obstetric_history__contains=["History of recurrent miscarriage"]).count()
+    multiple_gestation = Patient.objects.filter(current_pregnancy_menternal__contains=["Multiple gestation"]).count()
+    gdm = Patient.objects.filter(current_pregnancy_menternal__contains=["GDM"]).count()
+    preeclampsia = Patient.objects.filter(current_pregnancy_menternal__contains=["Pre-eclampsia"]).count()
+    severe_anemia = Patient.objects.filter(current_pregnancy_menternal__contains=["Severe anemia (Hb<7)"]).count()
+    placenta_prev_abrupt = Patient.objects.filter(current_pregnancy_menternal__contains=["Placenta previa/abruption"]).count()
+    post_ivf = Patient.objects.filter(current_pregnancy_menternal__contains=["Pregnancy post IVF /ICSI"]).count()
+    non_cephalic = Patient.objects.filter(current_pregnancy_menternal__contains=["Non-cephalic presentation"]).count()
+    iugr = Patient.objects.filter(current_pregnancy_menternal__contains=["IUGR"]).count()
+
+    data = [
+        {"label": "History of recurrent miscarriage", "count": recurrent_miscarriage, "percentage": percent(recurrent_miscarriage)},
+        {"label": "Multiple gestation", "count": multiple_gestation, "percentage": percent(multiple_gestation)},
+        {"label": "GDM", "count": gdm, "percentage": percent(gdm)},
+        {"label": "Pre-eclampsia", "count": preeclampsia, "percentage": percent(preeclampsia)},
+        {"label": "Severe anemia (Hb<7)", "count": severe_anemia, "percentage": percent(severe_anemia)},
+        {"label": "Placenta previa/abruption", "count": placenta_prev_abrupt, "percentage": percent(placenta_prev_abrupt)},
+        {"label": "Pregnancy post IVF /ICSI", "count": post_ivf, "percentage": percent(post_ivf)},
+        {"label": "Non-cephalic presentation", "count": non_cephalic, "percentage": percent(non_cephalic)},
+        {"label": "IUGR", "count": iugr, "percentage": percent(iugr)}
+    ]
+    return Response({"special_conditions": data, "total_patients": total_patients}, status=status.HTTP_200_OK)
