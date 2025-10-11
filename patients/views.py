@@ -341,35 +341,183 @@ def general_indicators(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def booking_status(request):
+    """Get booking status distribution for pie chart"""
+    total_patients = Patient.objects.count()
+    
+    # Count each booking status
+    first_trimester = Patient.objects.filter(booking="first_trimester").count()
+    second_trimester = Patient.objects.filter(booking="second_trimester").count()
+    third_trimester = Patient.objects.filter(booking="third_trimester").count()
+    unbooked = Patient.objects.filter(booking="unbooked").count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    data = {
+        "total_patients": total_patients,
+        "booking_data": [
+            {
+                "name": "First Trimester",
+                "value": first_trimester,
+                "percent": percent(first_trimester, total_patients)
+            },
+            {
+                "name": "Second Trimester",
+                "value": second_trimester,
+                "percent": percent(second_trimester, total_patients)
+            },
+            {
+                "name": "Third Trimester",
+                "value": third_trimester,
+                "percent": percent(third_trimester, total_patients)
+            },
+            {
+                "name": "Unbooked",
+                "value": unbooked,
+                "percent": percent(unbooked, total_patients)
+            }
+        ]
+    }
+    
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def nationality_map(request):
-    """Return grouped nationality counts for map visualization"""
-    # Get top 5 nationalities (case-insensitive group by)
+    """Return grouped nationality counts for map visualization with coordinates"""
+    # Get all nationalities with their counts
     qs = (
         Patient.objects.values('nationality')
         .annotate(count=Count('id'))
-        .order_by('-count')[:5]
+        .order_by('-count')
     )
-    # Static mapping for ISO_A3 and coordinates (extend as needed)
+    # Comprehensive mapping for countries with coordinates [longitude, latitude] and ISO codes
     country_map = {
-        'saudi arabia': { 'code': 'SAU', 'coords': [45.0792, 23.8859] },
-        'egypt': { 'code': 'EGY', 'coords': [30.8025, 26.8206] },
-        'sudan': { 'code': 'SDN', 'coords': [30.2176, 15.5007] },
-        'yemen': { 'code': 'YEM', 'coords': [48.5164, 15.5527] },
-        'india': { 'code': 'IND', 'coords': [78.9629, 20.5937] },
-        'pakistan': { 'code': 'PAK', 'coords': [69.3451, 30.3753] },
-        # Add more as needed
+        'saudi arabia': { 'code': 'SAU', 'coords': [45.0792, 23.8859], 'name': 'Saudi Arabia' },
+        'saudi': { 'code': 'SAU', 'coords': [45.0792, 23.8859], 'name': 'Saudi Arabia' },
+        'egypt': { 'code': 'EGY', 'coords': [30.8025, 26.8206], 'name': 'Egypt' },
+        'egyptian': { 'code': 'EGY', 'coords': [30.8025, 26.8206], 'name': 'Egypt' },
+        'yemen': { 'code': 'YEM', 'coords': [48.5164, 15.5527], 'name': 'Yemen' },
+        'yemeni': { 'code': 'YEM', 'coords': [48.5164, 15.5527], 'name': 'Yemen' },
+        'syria': { 'code': 'SYR', 'coords': [38.9968, 34.8021], 'name': 'Syria' },
+        'syrian': { 'code': 'SYR', 'coords': [38.9968, 34.8021], 'name': 'Syria' },
+        'jordan': { 'code': 'JOR', 'coords': [36.2384, 30.5852], 'name': 'Jordan' },
+        'jordanian': { 'code': 'JOR', 'coords': [36.2384, 30.5852], 'name': 'Jordan' },
+        'palestine': { 'code': 'PSE', 'coords': [35.2332, 31.9522], 'name': 'Palestine' },
+        'palestinian': { 'code': 'PSE', 'coords': [35.2332, 31.9522], 'name': 'Palestine' },
+        'lebanon': { 'code': 'LBN', 'coords': [35.8623, 33.8547], 'name': 'Lebanon' },
+        'lebanese': { 'code': 'LBN', 'coords': [35.8623, 33.8547], 'name': 'Lebanon' },
+        'iraq': { 'code': 'IRQ', 'coords': [44.3615, 33.3128], 'name': 'Iraq' },
+        'iraqi': { 'code': 'IRQ', 'coords': [44.3615, 33.3128], 'name': 'Iraq' },
+        'kuwait': { 'code': 'KWT', 'coords': [47.4818, 29.3117], 'name': 'Kuwait' },
+        'kuwaiti': { 'code': 'KWT', 'coords': [47.4818, 29.3117], 'name': 'Kuwait' },
+        'uae': { 'code': 'ARE', 'coords': [53.8478, 23.4241], 'name': 'UAE' },
+        'emirati': { 'code': 'ARE', 'coords': [53.8478, 23.4241], 'name': 'UAE' },
+        'united arab emirates': { 'code': 'ARE', 'coords': [53.8478, 23.4241], 'name': 'UAE' },
+        'qatar': { 'code': 'QAT', 'coords': [51.1839, 25.3548], 'name': 'Qatar' },
+        'qatari': { 'code': 'QAT', 'coords': [51.1839, 25.3548], 'name': 'Qatar' },
+        'bahrain': { 'code': 'BHR', 'coords': [50.5577, 26.0667], 'name': 'Bahrain' },
+        'bahraini': { 'code': 'BHR', 'coords': [50.5577, 26.0667], 'name': 'Bahrain' },
+        'oman': { 'code': 'OMN', 'coords': [55.9754, 21.4735], 'name': 'Oman' },
+        'omani': { 'code': 'OMN', 'coords': [55.9754, 21.4735], 'name': 'Oman' },
+        'sudan': { 'code': 'SDN', 'coords': [30.2176, 12.8628], 'name': 'Sudan' },
+        'sudanese': { 'code': 'SDN', 'coords': [30.2176, 12.8628], 'name': 'Sudan' },
+        'morocco': { 'code': 'MAR', 'coords': [-7.0926, 31.7917], 'name': 'Morocco' },
+        'moroccan': { 'code': 'MAR', 'coords': [-7.0926, 31.7917], 'name': 'Morocco' },
+        'algeria': { 'code': 'DZA', 'coords': [1.6596, 28.0339], 'name': 'Algeria' },
+        'algerian': { 'code': 'DZA', 'coords': [1.6596, 28.0339], 'name': 'Algeria' },
+        'tunisia': { 'code': 'TUN', 'coords': [9.5375, 33.8869], 'name': 'Tunisia' },
+        'tunisian': { 'code': 'TUN', 'coords': [9.5375, 33.8869], 'name': 'Tunisia' },
+        'libya': { 'code': 'LBY', 'coords': [17.2283, 26.3351], 'name': 'Libya' },
+        'libyan': { 'code': 'LBY', 'coords': [17.2283, 26.3351], 'name': 'Libya' },
+        'pakistan': { 'code': 'PAK', 'coords': [69.3451, 30.3753], 'name': 'Pakistan' },
+        'pakistani': { 'code': 'PAK', 'coords': [69.3451, 30.3753], 'name': 'Pakistan' },
+        'india': { 'code': 'IND', 'coords': [78.9629, 20.5937], 'name': 'India' },
+        'indian': { 'code': 'IND', 'coords': [78.9629, 20.5937], 'name': 'India' },
+        'bangladesh': { 'code': 'BGD', 'coords': [90.3563, 23.6850], 'name': 'Bangladesh' },
+        'bangladeshi': { 'code': 'BGD', 'coords': [90.3563, 23.6850], 'name': 'Bangladesh' },
+        'philippines': { 'code': 'PHL', 'coords': [121.7740, 12.8797], 'name': 'Philippines' },
+        'filipino': { 'code': 'PHL', 'coords': [121.7740, 12.8797], 'name': 'Philippines' },
+        'indonesia': { 'code': 'IDN', 'coords': [113.9213, -0.7893], 'name': 'Indonesia' },
+        'indonesian': { 'code': 'IDN', 'coords': [113.9213, -0.7893], 'name': 'Indonesia' },
+        'turkey': { 'code': 'TUR', 'coords': [35.2433, 38.9637], 'name': 'Turkey' },
+        'turkish': { 'code': 'TUR', 'coords': [35.2433, 38.9637], 'name': 'Turkey' },
+        'iran': { 'code': 'IRN', 'coords': [53.6880, 32.4279], 'name': 'Iran' },
+        'iranian': { 'code': 'IRN', 'coords': [53.6880, 32.4279], 'name': 'Iran' },
+        'afghanistan': { 'code': 'AFG', 'coords': [67.7100, 33.9391], 'name': 'Afghanistan' },
+        'afghan': { 'code': 'AFG', 'coords': [67.7100, 33.9391], 'name': 'Afghanistan' },
+        'somalia': { 'code': 'SOM', 'coords': [46.1996, 5.1521], 'name': 'Somalia' },
+        'somali': { 'code': 'SOM', 'coords': [46.1996, 5.1521], 'name': 'Somalia' },
+        'ethiopia': { 'code': 'ETH', 'coords': [40.4897, 9.1450], 'name': 'Ethiopia' },
+        'ethiopian': { 'code': 'ETH', 'coords': [40.4897, 9.1450], 'name': 'Ethiopia' },
+        'eritrea': { 'code': 'ERI', 'coords': [39.7823, 15.1794], 'name': 'Eritrea' },
+        'eritrean': { 'code': 'ERI', 'coords': [39.7823, 15.1794], 'name': 'Eritrea' },
+        'nigeria': { 'code': 'NGA', 'coords': [8.6753, 9.0820], 'name': 'Nigeria' },
+        'nigerian': { 'code': 'NGA', 'coords': [8.6753, 9.0820], 'name': 'Nigeria' },
+        'chad': { 'code': 'TCD', 'coords': [18.7322, 15.4542], 'name': 'Chad' },
+        'chadian': { 'code': 'TCD', 'coords': [18.7322, 15.4542], 'name': 'Chad' },
+        'mali': { 'code': 'MLI', 'coords': [-3.9962, 17.5707], 'name': 'Mali' },
+        'malian': { 'code': 'MLI', 'coords': [-3.9962, 17.5707], 'name': 'Mali' },
+        'nepal': { 'code': 'NPL', 'coords': [84.1240, 28.3949], 'name': 'Nepal' },
+        'nepalese': { 'code': 'NPL', 'coords': [84.1240, 28.3949], 'name': 'Nepal' },
+        'sri lanka': { 'code': 'LKA', 'coords': [80.7718, 7.8731], 'name': 'Sri Lanka' },
+        'sri lankan': { 'code': 'LKA', 'coords': [80.7718, 7.8731], 'name': 'Sri Lanka' },
+        'malaysia': { 'code': 'MYS', 'coords': [101.9758, 4.2105], 'name': 'Malaysia' },
+        'malaysian': { 'code': 'MYS', 'coords': [101.9758, 4.2105], 'name': 'Malaysia' },
+        'usa': { 'code': 'USA', 'coords': [-95.7129, 37.0902], 'name': 'USA' },
+        'american': { 'code': 'USA', 'coords': [-95.7129, 37.0902], 'name': 'USA' },
+        'united states': { 'code': 'USA', 'coords': [-95.7129, 37.0902], 'name': 'USA' },
+        'uk': { 'code': 'GBR', 'coords': [-3.4360, 55.3781], 'name': 'UK' },
+        'british': { 'code': 'GBR', 'coords': [-3.4360, 55.3781], 'name': 'UK' },
+        'united kingdom': { 'code': 'GBR', 'coords': [-3.4360, 55.3781], 'name': 'UK' },
+        'canada': { 'code': 'CAN', 'coords': [-106.3468, 56.1304], 'name': 'Canada' },
+        'canadian': { 'code': 'CAN', 'coords': [-106.3468, 56.1304], 'name': 'Canada' },
+        'australia': { 'code': 'AUS', 'coords': [133.7751, -25.2744], 'name': 'Australia' },
+        'australian': { 'code': 'AUS', 'coords': [133.7751, -25.2744], 'name': 'Australia' },
+        'france': { 'code': 'FRA', 'coords': [2.2137, 46.2276], 'name': 'France' },
+        'french': { 'code': 'FRA', 'coords': [2.2137, 46.2276], 'name': 'France' },
+        'germany': { 'code': 'DEU', 'coords': [10.4515, 51.1657], 'name': 'Germany' },
+        'german': { 'code': 'DEU', 'coords': [10.4515, 51.1657], 'name': 'Germany' },
+        'italy': { 'code': 'ITA', 'coords': [12.5674, 41.8719], 'name': 'Italy' },
+        'italian': { 'code': 'ITA', 'coords': [12.5674, 41.8719], 'name': 'Italy' },
+        'spain': { 'code': 'ESP', 'coords': [-3.7492, 40.4637], 'name': 'Spain' },
+        'spanish': { 'code': 'ESP', 'coords': [-3.7492, 40.4637], 'name': 'Spain' },
+        'china': { 'code': 'CHN', 'coords': [104.1954, 35.8617], 'name': 'China' },
+        'chinese': { 'code': 'CHN', 'coords': [104.1954, 35.8617], 'name': 'China' },
+        'japan': { 'code': 'JPN', 'coords': [138.2529, 36.2048], 'name': 'Japan' },
+        'japanese': { 'code': 'JPN', 'coords': [138.2529, 36.2048], 'name': 'Japan' },
+        'south korea': { 'code': 'KOR', 'coords': [127.7669, 35.9078], 'name': 'South Korea' },
+        'korean': { 'code': 'KOR', 'coords': [127.7669, 35.9078], 'name': 'South Korea' },
     }
     result = []
+    total_patients = 0
+    unknown_count = 0
     for row in qs:
         nat = (row['nationality'] or '').strip().lower()
-        info = country_map.get(nat, { 'code': 'OTH', 'coords': [0,0] })
+        count = row['count']
+        total_patients += count
+        info = country_map.get(nat)
+        if info:
+            result.append({
+                'code': info['code'],
+                'label': info['name'],
+                'original_nationality': row['nationality'],
+                'count': count,
+                'coords': info['coords'],
+            })
+        else:
+            unknown_count += count
+    if unknown_count > 0:
         result.append({
-            'code': info['code'],
-            'label': row['nationality'],
-            'count': row['count'],
-            'coords': info['coords'],
+            'code': 'OTH',
+            'label': 'Other',
+            'original_nationality': 'Unknown',
+            'count': unknown_count,
+            'coords': [0, 0],
         })
-    return Response(result)
+    return Response({'map_data': result, 'total_patients': total_patients}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -739,7 +887,7 @@ def vbac_success_rate(request):
     vbac_data = (
         Patient.objects
         .filter(vbac=True)
-        .annotate(month=TruncMonth('time_of_delivery'))
+        .annotate(month=TruncMonth('time_of_admission'))
         .values('month')
         .annotate(count=Count('id'))
         .order_by('month')
@@ -771,7 +919,7 @@ def primary_cs_rate(request):
     primary_cs_data = (
         Patient.objects
         .filter(total_number_of_cs='0', mode_of_delivery='cs')
-        .annotate(month=TruncMonth('time_of_delivery'))
+        .annotate(month=TruncMonth('time_of_admission'))
         .values('month')
         .annotate(count=Count('id'))
         .order_by('month')
@@ -853,3 +1001,110 @@ def special_conditions(request):
         {"label": "IUGR", "count": iugr, "percentage": percent(iugr)}
     ]
     return Response({"special_conditions": data, "total_patients": total_patients}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def mode_of_delivery_trends(request):
+    """
+    Get mode of delivery trends over time with optional date range filtering.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    - forecast: boolean (optional, default False) - whether to include forecast
+    """
+    from datetime import datetime, timedelta
+    from django.db.models import Count
+    from django.db.models.functions import TruncMonth
+    
+    # Get query parameters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    include_forecast = request.GET.get('forecast', 'false').lower() == 'true'
+    
+    # Build base queryset
+    queryset = Patient.objects.filter(time_of_admission__isnull=False)
+    
+    # Apply date filtering if provided
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            queryset = queryset.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            queryset = queryset.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    # Group by month and mode of delivery
+    cs_by_month = (
+        queryset.filter(mode_of_delivery='cs')
+        .annotate(month=TruncMonth('time_of_admission'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    nvd_by_month = (
+        queryset.filter(mode_of_delivery='nvd')
+        .annotate(month=TruncMonth('time_of_admission'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    # Format the data for the frontend
+    cs_data = {item['month'].strftime('%Y-%m'): item['count'] for item in cs_by_month}
+    nvd_data = {item['month'].strftime('%Y-%m'): item['count'] for item in nvd_by_month}
+    
+    # Get all unique months
+    all_months = sorted(set(list(cs_data.keys()) + list(nvd_data.keys())))
+    
+    # Build response data
+    trend_data = []
+    for month in all_months:
+        trend_data.append({
+            'month': month,
+            'month_label': datetime.strptime(month, '%Y-%m').strftime('%b %Y'),
+            'cs_count': cs_data.get(month, 0),
+            'nvd_count': nvd_data.get(month, 0),
+            'total': cs_data.get(month, 0) + nvd_data.get(month, 0)
+        })
+    
+    # Simple forecast logic (if requested)
+    forecast_data = []
+    if include_forecast and len(trend_data) >= 3:
+        # Calculate average growth for last 3 months
+        last_3_cs = [item['cs_count'] for item in trend_data[-3:]]
+        last_3_nvd = [item['nvd_count'] for item in trend_data[-3:]]
+        
+        avg_cs = sum(last_3_cs) / len(last_3_cs)
+        avg_nvd = sum(last_3_nvd) / len(last_3_nvd)
+        
+        # Generate 3 months forecast
+        last_month = datetime.strptime(all_months[-1], '%Y-%m')
+        for i in range(1, 4):
+            forecast_month = last_month + timedelta(days=30 * i)
+            forecast_month_str = forecast_month.strftime('%Y-%m')
+            forecast_data.append({
+                'month': forecast_month_str,
+                'month_label': forecast_month.strftime('%b %Y') + ' (Forecast)',
+                'cs_count': int(avg_cs),
+                'nvd_count': int(avg_nvd),
+                'total': int(avg_cs + avg_nvd),
+                'is_forecast': True
+            })
+    
+    return Response({
+        'trends': trend_data,
+        'forecast': forecast_data,
+        'summary': {
+            'total_cs': sum(item['cs_count'] for item in trend_data),
+            'total_nvd': sum(item['nvd_count'] for item in trend_data),
+            'total_deliveries': sum(item['total'] for item in trend_data)
+        }
+    }, status=status.HTTP_200_OK)

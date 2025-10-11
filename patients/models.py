@@ -147,6 +147,7 @@ class Patient(models.Model):
     hie = models.BooleanField(default=False)
     nicu_admission = models.BooleanField(default=False)
     birth_injuries = models.BooleanField(default=False)
+    baby_file_number = models.CharField(max_length=100, blank=True, null=True)
     
     GENDER_CHOICES = [
         ('male', 'Male'),
@@ -378,6 +379,22 @@ class Patient(models.Model):
             self.bmi = round(float(self.weight) / (height_m ** 2), 2)
         if "Preterm labor < 37 weeks" in self.current_pregnancy_fetal:
             self.preterm_birth_less_37_weeks = True
+
+        try:
+            if int(self.gestational_age.split(" ")[0]) < 37 and "Preterm labor < 37 weeks" not in self.current_pregnancy_fetal:
+                self.current_pregnancy_fetal.append("Preterm labor < 37 weeks")    
+        except:
+            pass
+        
+        if self.bmi > 40 and "BMI > 40" not in self.social:
+            self.social.append("BMI > 40")
+        
+        elif self.bmi > 30 and "BMI 30-34.9" not in self.social:
+            self.social.append("BMI 30-34.9")
+        
+        elif self.bmi > 35 and "BMI 35-39.9" not in self.social:
+            self.social.append("BMI 35-39.9")
+        
         super().save(*args, **kwargs)
 
 

@@ -35,6 +35,7 @@ urlpatterns = [
 
     # Analytics Endpoints
     path('analytics/general-indicators/', views.general_indicators, name='general_indicators'),
+    path('analytics/booking-status/', views.booking_status, name='booking_status'),
     path('analytics/nationality-map/', views.nationality_map, name='nationality_map'),
     path('analytics/cs-indications/', views.cs_indications_counts, name='cs_indications_counts'),
     path('analytics/risk-factors/', views.risk_factors, name='risk_factors'),
@@ -44,5 +45,6 @@ urlpatterns = [
     path('analytics/primary-cs-rate/', views.primary_cs_rate, name='primary_cs_rate'),
     path('analytics/type-of-cs/', views.cs_type_counts, name='cs_type_counts'),
     path('analytics/special-conditions/', views.special_conditions, name='special_conditions'),
+    path('analytics/mode-of-delivery-trends/', views.mode_of_delivery_trends, name='mode_of_delivery_trends'),
 
 ]
