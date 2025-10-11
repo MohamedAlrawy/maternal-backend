@@ -1108,3 +1108,187 @@ def mode_of_delivery_trends(request):
             'total_deliveries': sum(item['total'] for item in trend_data)
         }
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def vbac_comparison(request):
+    """
+    Get VBAC vs Non-VBAC comparison counts.
+    Returns counts and percentages for patients with VBAC (Vaginal Birth After Cesarean) and Non-VBAC.
+    """
+    from .models import Patient
+    
+    total_patients = Patient.objects.count()
+    
+    # VBAC patients (vbac=True)
+    vbac_count = Patient.objects.filter(vbac=True).count()
+    
+    # Non-VBAC patients (vbac=False or vbac is null)
+    non_vbac_count = Patient.objects.filter(vbac=False).count() + Patient.objects.filter(vbac__isnull=True).count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    result = {
+        'total_patients': total_patients,
+        'vbac_data': [
+            {
+                'label': 'VBAC',
+                'count': vbac_count,
+                'percentage': percent(vbac_count, total_patients)
+            },
+            {
+                'label': 'Non-VBAC',
+                'count': non_vbac_count,
+                'percentage': percent(non_vbac_count, total_patients)
+            }
+        ]
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def primary_cs_comparison(request):
+    """
+    Get Primary CS vs Non-Primary CS comparison counts.
+    Primary CS: total_number_of_cs='0' AND mode_of_delivery='cs'
+    Non-Primary CS: total_number_of_cs!='0' AND mode_of_delivery='cs'
+    """
+    from .models import Patient
+    from django.db.models import Q
+    
+    # Total CS patients
+    total_cs = Patient.objects.filter(mode_of_delivery='cs').count()
+    
+    # Primary CS: first-time cesarean (total_number_of_cs='0' and mode_of_delivery='cs')
+    primary_cs_count = Patient.objects.filter(
+        total_number_of_cs='0',
+        mode_of_delivery='cs'
+    ).count()
+    
+    # Non-Primary CS: repeat cesarean (total_number_of_cs!='0' and mode_of_delivery='cs')
+    non_primary_cs_count = Patient.objects.filter(
+        ~Q(total_number_of_cs='0'),
+        mode_of_delivery='cs'
+    ).count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    result = {
+        'total_cs': total_cs,
+        'primary_cs_data': [
+            {
+                'label': 'Primary CS',
+                'count': primary_cs_count,
+                'percentage': percent(primary_cs_count, total_cs)
+            },
+            {
+                'label': 'Non-Primary CS (Repeat)',
+                'count': non_primary_cs_count,
+                'percentage': percent(non_primary_cs_count, total_cs)
+            }
+        ]
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def instrumental_delivery_trends(request):
+    """
+    Get instrumental delivery trends over time with optional date range filtering.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    - forecast: boolean (optional, default False) - whether to include forecast
+    """
+    from datetime import datetime, timedelta
+    from django.db.models import Count
+    from django.db.models.functions import TruncMonth
+    
+    # Get query parameters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    include_forecast = request.GET.get('forecast', 'false').lower() == 'true'
+    
+    # Build base queryset
+    queryset = Patient.objects.filter(time_of_admission__isnull=False)
+    
+    # Apply date filtering if provided
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            queryset = queryset.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            queryset = queryset.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    # Group by month and count instrumental deliveries
+    instrumental_by_month = (
+        queryset.filter(instrumental_delivery=True)
+        .annotate(month=TruncMonth('time_of_admission'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    # Format the data for the frontend
+    instrumental_data = {item['month'].strftime('%Y-%m'): item['count'] for item in instrumental_by_month}
+    
+    # Get all unique months from the queryset
+    all_months_qs = (
+        queryset
+        .annotate(month=TruncMonth('time_of_admission'))
+        .values('month')
+        .distinct()
+        .order_by('month')
+    )
+    all_months = sorted([item['month'].strftime('%Y-%m') for item in all_months_qs if item['month']])
+    
+    # Build response data
+    trend_data = []
+    for month in all_months:
+        trend_data.append({
+            'month': month,
+            'month_label': datetime.strptime(month, '%Y-%m').strftime('%b %Y'),
+            'instrumental_count': instrumental_data.get(month, 0)
+        })
+    
+    # Simple forecast logic (if requested)
+    forecast_data = []
+    if include_forecast and len(trend_data) >= 3:
+        # Calculate average for last 3 months
+        last_3_instrumental = [item['instrumental_count'] for item in trend_data[-3:]]
+        avg_instrumental = sum(last_3_instrumental) / len(last_3_instrumental)
+        
+        # Generate 3 months forecast
+        if all_months:
+            last_month = datetime.strptime(all_months[-1], '%Y-%m')
+            for i in range(1, 4):
+                forecast_month = last_month + timedelta(days=30 * i)
+                forecast_month_str = forecast_month.strftime('%Y-%m')
+                forecast_data.append({
+                    'month': forecast_month_str,
+                    'month_label': forecast_month.strftime('%b %Y') + ' (Forecast)',
+                    'instrumental_count': int(avg_instrumental),
+                    'is_forecast': True
+                })
+    
+    return Response({
+        'trends': trend_data,
+        'forecast': forecast_data,
+        'summary': {
+            'total_instrumental': sum(item['instrumental_count'] for item in trend_data)
+        }
+    }, status=status.HTTP_200_OK)

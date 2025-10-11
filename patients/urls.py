@@ -46,5 +46,8 @@ urlpatterns = [
     path('analytics/type-of-cs/', views.cs_type_counts, name='cs_type_counts'),
     path('analytics/special-conditions/', views.special_conditions, name='special_conditions'),
     path('analytics/mode-of-delivery-trends/', views.mode_of_delivery_trends, name='mode_of_delivery_trends'),
+    path('analytics/vbac-comparison/', views.vbac_comparison, name='vbac_comparison'),
+    path('analytics/primary-cs-comparison/', views.primary_cs_comparison, name='primary_cs_comparison'),
+    path('analytics/instrumental-delivery-trends/', views.instrumental_delivery_trends, name='instrumental_delivery_trends'),
 
 ]
