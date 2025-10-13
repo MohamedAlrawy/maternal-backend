@@ -57,7 +57,7 @@ def map_cs_from_obstetric_history(obst_list, current_cs):
     for item in low:
         if 'previous c-section' in item or 'previous cs' in item or 'previous c section' in item:
             mapped = max(mapped, 1)
-        if re.search(r'multiple c-?sections\\s*\\(?\\s*2\\s*\\)?', item) or 'multiple c-sections (2)' in item or 'multiple cs (2)' in item:
+        if re.search(r'multiple c-sections (>3)', item) or 'multiple c-sections (2)' in item or 'multiple cs (2)' in item:
             mapped = max(mapped, 2)
         if 'multiple c-sections' in item and ('>3' in item or 'more than 3' in item or '(>3)' in item):
             mapped = max(mapped, 3)

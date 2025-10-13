@@ -183,8 +183,11 @@ def predict_neonatal_direct_payload(payload, threshold=0.5, rule_threshold=80):
                     feature_names = NUMERIC_FEATURES + list(cat_names) + BINARY_FEATURES
                     importances = clf.feature_importances_
                     feat_imp = sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)
+                    print(feat_imp)
+                    print("--------------------------------")
+                    
                     top_features = [f"{name} ({imp:.3f})" for name, imp in feat_imp[:4]]
-                    reason = f"Top influencing factors: {', '.join(top_features)}"
+                    reason = "Model-based prediction"
                 except Exception:
                     reason = "Model-based prediction"
             return {'prediction': pred, 'probability': proba, 'reason': reason, 'source':'model', 'adverse_neonatal': True if pred=='ADVERSE' else False}
