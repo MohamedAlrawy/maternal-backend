@@ -11,6 +11,9 @@ psycopg2-binary==2.9.9
 # Authentication
 djangorestframework-simplejwt==5.3.1
 
+# WSGI Server
+gunicorn==23.0.0
+
 # Machine Learning & Data Science
 scikit-learn==1.5.2
 pandas==2.2.3
