@@ -2,8 +2,9 @@
 set -e
 
 echo "Waiting for PostgreSQL to be ready..."
-while ! nc -z $DB_HOST $DB_PORT; do
-  sleep 0.1
+until PGPASSWORD=$DB_PASSWORD psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c '\q' 2>/dev/null; do
+  echo "PostgreSQL is unavailable - sleeping"
+  sleep 1
 done
 echo "PostgreSQL is up!"
 
