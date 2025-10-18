@@ -808,11 +808,11 @@ def fetal_neonatal_outcomes(request):
     # Birth Injuries Rate
     birth_injuries_count = Patient.objects.filter(birth_injuries=True).count()
     # Low Birth Weight (<2500g)
-    low_birth_weight_count = Patient.objects.filter(birth_weight__lt=2500).count()
+    low_birth_weight_count = Patient.objects.filter(birth_weight__lt=1500).count()
     # Macrosomia (≥4000g)
     macrosomia_count = Patient.objects.filter(birth_weight__gte=4000).count()
     # Booked Cases Share
-    booked_cases_count = Patient.objects.exclude(booking="unbooked").count()
+    # booked_cases_count = Patient.objects.exclude(booking="unbooked").count()
     
     outcomes_data = [
         {
@@ -860,11 +860,11 @@ def fetal_neonatal_outcomes(request):
             "count": macrosomia_count,
             "percentage": percent(macrosomia_count, total_patients)
         },
-        {
-            "label": "Booked Cases Share",
-            "count": booked_cases_count,
-            "percentage": percent(booked_cases_count, total_patients)
-        },
+        # {
+        #     "label": "Booked Cases Share",
+        #     "count": booked_cases_count,
+        #     "percentage": percent(booked_cases_count, total_patients)
+        # },
     ]
     
     result = {
@@ -901,6 +901,38 @@ def vbac_success_rate(request):
                 'month': item['month'].strftime('%Y-%m'),
                 'month_label': item['month'].strftime('%B %Y'),
                 'count': item['count']
+            })
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def vbac_trends(request):
+    """Return monthly VBAC trends for patients with vbac=True and total_number_of_cs=1"""
+    from .models import Patient
+    from django.db.models import Count
+    from django.db.models.functions import TruncMonth
+    
+    # Get VBAC trends data grouped by month
+    # Filter for patients with vbac=True and total_number_of_cs='1'
+    vbac_trends_data = (
+        Patient.objects
+        .filter(vbac=True, total_number_of_cs='1')
+        .annotate(month=TruncMonth('time_of_admission'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    # Format data for chart
+    result = []
+    for item in vbac_trends_data:
+        if item['month']:
+            result.append({
+                'month': item['month'].strftime('%Y-%m'),
+                'month_label': item['month'].strftime('%B %Y'),
+                'vbac_count': item['count']
             })
     
     return Response(result, status=status.HTTP_200_OK)
@@ -1153,45 +1185,45 @@ def vbac_comparison(request):
 @permission_classes([IsAuthenticated])
 def primary_cs_comparison(request):
     """
-    Get Primary CS vs Non-Primary CS comparison counts.
-    Primary CS: total_number_of_cs='0' AND mode_of_delivery='cs'
-    Non-Primary CS: total_number_of_cs!='0' AND mode_of_delivery='cs'
+    Get CS counts by total_number_of_cs (0-9) where mode_of_delivery='cs'.
+    0 is labeled as 'Primary CS', others as 'CS #2', 'CS #3', etc.
     """
     from .models import Patient
-    from django.db.models import Q
+    from django.db.models import Count
     
     # Total CS patients
     total_cs = Patient.objects.filter(mode_of_delivery='cs').count()
     
-    # Primary CS: first-time cesarean (total_number_of_cs='0' and mode_of_delivery='cs')
-    primary_cs_count = Patient.objects.filter(
-        total_number_of_cs='0',
-        mode_of_delivery='cs'
-    ).count()
-    
-    # Non-Primary CS: repeat cesarean (total_number_of_cs!='0' and mode_of_delivery='cs')
-    non_primary_cs_count = Patient.objects.filter(
-        ~Q(total_number_of_cs='0'),
-        mode_of_delivery='cs'
-    ).count()
+    # Get counts for each total_number_of_cs from 0 to 9
+    cs_counts = []
+    for i in range(10):  # 0 to 9
+        count = Patient.objects.filter(
+            total_number_of_cs=str(i),
+            mode_of_delivery='cs'
+        ).count()
+        
+        if count > 0:  # Only include if there are patients
+            if i == 0:
+                label = 'Primary CS'
+            else:
+                label = f'CS #{i + 1}'
+            
+            cs_counts.append({
+                'label': label,
+                'count': count,
+                'total_number_of_cs': i
+            })
     
     def percent(part, total):
         return round((part / total) * 100, 2) if total else 0
     
+    # Add percentage to each item
+    for item in cs_counts:
+        item['percentage'] = percent(item['count'], total_cs)
+    
     result = {
         'total_cs': total_cs,
-        'primary_cs_data': [
-            {
-                'label': 'Primary CS',
-                'count': primary_cs_count,
-                'percentage': percent(primary_cs_count, total_cs)
-            },
-            {
-                'label': 'Non-Primary CS (Repeat)',
-                'count': non_primary_cs_count,
-                'percentage': percent(non_primary_cs_count, total_cs)
-            }
-        ]
+        'primary_cs_data': cs_counts
     }
     
     return Response(result, status=status.HTTP_200_OK)
