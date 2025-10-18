@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, Patient, ProgressNote, Alert
+from .models import User, Patient, ProgressNote, Alert, Baby
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -49,8 +49,20 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Must include email and password')
 
 
+class BabySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Baby
+        fields = [
+            'id', 'file_number', 'new_born_viability', 'preterm_birth_less_37_weeks', 'gender',
+            'birth_weight', 'apgar_score', 'neonatal_death', 'congenital_anomalies', 'hie',
+            'nicu_admission', 'birth_injuries'
+        ]
+        read_only_fields = ['id']
+
+
 class PatientSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    babies = BabySerializer(many=True, read_only=False)
     
     class Meta:
         model = Patient
@@ -73,11 +85,6 @@ class PatientSerializer(serializers.ModelSerializer):
             'vte_postpartum', 'infection_endometritis', 'wound_complication', 'other_maternal_morbidity',
             'icu_admission', 'los_by_days', 'ward_admissin_days', 'icu_admission_days', 'cost',
             
-            # Neonatal fields
-            'birth_weight', 'apgar_score', 'neonatal_death', 'preterm_birth_less_37_weeks',
-            'congenital_anomalies', 'hie', 'nicu_admission', 'birth_injuries', 'gender',
-            'placenta_location', 'liquor', 'estimated_fetal_weight_by_gm',
-            
             # Delivery details
             'presentation', 'fetus_number', 'ga_interval', 'type_of_labor', 'mode_of_delivery',
             'perineum_integrity', 'instrumental_delivery', 'vbac', 'type_of_cs', 'cs_indication',
@@ -86,7 +93,9 @@ class PatientSerializer(serializers.ModelSerializer):
             'membrane_status', 'rupture_duration_hour', 'liquor_2', 'ctg_category',
             'doctor_name', 'hb_g_dl', 'platelets_x10e9l',
             
-            'created_at', 'updated_at', 'created_by_name'
+            'created_at', 'updated_at', 'created_by_name',
+            # Added related babies
+            'babies',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'bmi']
     
@@ -99,6 +108,57 @@ class PatientSerializer(serializers.ModelSerializer):
         if Patient.objects.filter(patient_id=value).exclude(pk=self.instance.pk if self.instance else None).exists():
             raise serializers.ValidationError("A patient with this patient ID already exists.")
         return value
+
+    def update(self, instance, validated_data):
+        babies_data = validated_data.pop('babies', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if babies_data is not None:
+            current_babies = {int(b.id): b for b in instance.babies.all() if b.id is not None}
+            sent_ids = set()
+            for baby_data in babies_data:
+                baby_id = baby_data.get('id', None)
+                try:
+                    baby_id_int = int(baby_id)
+                except (TypeError, ValueError):
+                    baby_id_int = None
+                if baby_id_int and baby_id_int in current_babies:
+                    baby = current_babies[baby_id_int]
+                    for key, val in baby_data.items():
+                        if key != 'id':
+                            setattr(baby, key, val)
+                    baby.save()
+                    sent_ids.add(baby_id_int)
+                else:
+                    instance.babies.create(**{k: v for k, v in baby_data.items() if k != 'id'})
+            for baby_id, baby in current_babies.items():
+                if baby_id not in sent_ids:
+                    baby.delete()
+        return instance
+
+    def create(self, validated_data):
+        babies_data = validated_data.pop('babies', None)
+        patient = super().create(validated_data)
+        if babies_data:
+            existing_babies = {int(b.id): b for b in patient.babies.all() if b.id is not None}
+            sent_ids = set()
+            for baby_data in babies_data:
+                baby_id = baby_data.get('id', None)
+                try:
+                    baby_id_int = int(baby_id)
+                except (TypeError, ValueError):
+                    baby_id_int = None
+                if baby_id_int and baby_id_int in existing_babies:
+                    baby = existing_babies[baby_id_int]
+                    for key, val in baby_data.items():
+                        if key != 'id':
+                            setattr(baby, key, val)
+                    baby.save()
+                    sent_ids.add(baby_id_int)
+                else:
+                    patient.babies.create(**{k: v for k, v in baby_data.items() if k != 'id'})
+        return patient
 
 
 class ProgressNoteSerializer(serializers.ModelSerializer):

@@ -147,7 +147,6 @@ class Patient(models.Model):
     hie = models.BooleanField(default=False)
     nicu_admission = models.BooleanField(default=False)
     birth_injuries = models.BooleanField(default=False)
-    baby_file_number = models.CharField(max_length=100, blank=True, null=True)
     
     GENDER_CHOICES = [
         ('male', 'Male'),
@@ -433,3 +432,21 @@ class Alert(models.Model):
     
     def __str__(self):
         return f"{self.alert_type.upper()}: {self.message[:50]}..."
+
+
+class Baby(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="babies")
+    file_number = models.CharField(max_length=100, blank=True, null=True)
+    new_born_viability = models.BooleanField(default=True)
+    preterm_birth_less_37_weeks = models.BooleanField(default=False)
+    gender = models.CharField(max_length=10, choices=Patient.GENDER_CHOICES, blank=True, null=True)
+    birth_weight = models.FloatField(blank=True, null=True)
+    apgar_score = models.PositiveIntegerField(blank=True, null=True)
+    neonatal_death = models.BooleanField(default=False)
+    congenital_anomalies = models.BooleanField(default=False)
+    hie = models.BooleanField(default=False)
+    nicu_admission = models.BooleanField(default=False)
+    birth_injuries = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Baby {self.file_number or ''} for {self.patient.name}"
