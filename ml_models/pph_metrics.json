@@ -1,0 +1,194 @@
+{
+  "auc": 0.7651884132273777,
+  "sensitivity": 0.5,
+  "specificity": 0.8865248226950354,
+  "feature_names": [
+    "age",
+    "parity",
+    "bmi",
+    "pulse",
+    "bp_systolic",
+    "hb",
+    "platelets",
+    "cervical_dilatation_at_admission",
+    "labor_duration_hours",
+    "estimated_fetal_weight",
+    "chronic_hypertension",
+    "diabetes",
+    "blood_transfusion_history",
+    "severe_anemia",
+    "prev_cs_single",
+    "prev_cs_multiple",
+    "prev_pph",
+    "prolonged_labor_history",
+    "prev_placenta_abruption",
+    "prev_placenta_previa",
+    "placenta_abruption_current",
+    "placenta_previa_current",
+    "preeclampsia",
+    "multiple_gestation",
+    "grand_multipara",
+    "bmi_obese_35_39",
+    "bmi_obese_40_plus",
+    "fetus_number_twin",
+    "fetus_number_triplet",
+    "instrumental_delivery",
+    "cs_emergency",
+    "mode_cs",
+    "polyhydramnios",
+    "ctg_category_ii",
+    "ctg_category_iii",
+    "placenta_lower",
+    "placenta_covering_cervix"
+  ],
+  "feature_importance": [
+    {
+      "feature": "mode_cs",
+      "importance": 0.11880922371244125
+    },
+    {
+      "feature": "labor_duration_hours",
+      "importance": 0.0910031584484789
+    },
+    {
+      "feature": "estimated_fetal_weight",
+      "importance": 0.071319609943315
+    },
+    {
+      "feature": "platelets",
+      "importance": 0.06893061784220611
+    },
+    {
+      "feature": "hb",
+      "importance": 0.06774202713530482
+    },
+    {
+      "feature": "bmi",
+      "importance": 0.06669469109836995
+    },
+    {
+      "feature": "instrumental_delivery",
+      "importance": 0.06546835340884352
+    },
+    {
+      "feature": "cervical_dilatation_at_admission",
+      "importance": 0.0596882846350034
+    },
+    {
+      "feature": "bp_systolic",
+      "importance": 0.058899236461465394
+    },
+    {
+      "feature": "age",
+      "importance": 0.0512204317162953
+    },
+    {
+      "feature": "placenta_previa_current",
+      "importance": 0.04153695366793055
+    },
+    {
+      "feature": "prev_pph",
+      "importance": 0.03998970898200899
+    },
+    {
+      "feature": "placenta_covering_cervix",
+      "importance": 0.03740782342759404
+    },
+    {
+      "feature": "ctg_category_iii",
+      "importance": 0.03145706513233107
+    },
+    {
+      "feature": "pulse",
+      "importance": 0.027092764385192834
+    },
+    {
+      "feature": "parity",
+      "importance": 0.023973798425371097
+    },
+    {
+      "feature": "prev_cs_multiple",
+      "importance": 0.01851841691640531
+    },
+    {
+      "feature": "cs_emergency",
+      "importance": 0.01560634426301298
+    },
+    {
+      "feature": "prev_cs_single",
+      "importance": 0.010711604707766047
+    },
+    {
+      "feature": "bmi_obese_35_39",
+      "importance": 0.005114035998232693
+    },
+    {
+      "feature": "preeclampsia",
+      "importance": 0.003999603061645275
+    },
+    {
+      "feature": "ctg_category_ii",
+      "importance": 0.0038476094603983094
+    },
+    {
+      "feature": "chronic_hypertension",
+      "importance": 0.002714091222919395
+    },
+    {
+      "feature": "blood_transfusion_history",
+      "importance": 0.0026646995102375523
+    },
+    {
+      "feature": "diabetes",
+      "importance": 0.002598242192485321
+    },
+    {
+      "feature": "bmi_obese_40_plus",
+      "importance": 0.0023421127330095215
+    },
+    {
+      "feature": "fetus_number_twin",
+      "importance": 0.0023411235115572897
+    },
+    {
+      "feature": "polyhydramnios",
+      "importance": 0.0021709791074118892
+    },
+    {
+      "feature": "prolonged_labor_history",
+      "importance": 0.0019267574579566503
+    },
+    {
+      "feature": "grand_multipara",
+      "importance": 0.0015716071313382712
+    },
+    {
+      "feature": "severe_anemia",
+      "importance": 0.0014264161456711986
+    },
+    {
+      "feature": "prev_placenta_previa",
+      "importance": 0.00103615751832099
+    },
+    {
+      "feature": "fetus_number_triplet",
+      "importance": 0.00017645063947911935
+    },
+    {
+      "feature": "placenta_abruption_current",
+      "importance": 0.0
+    },
+    {
+      "feature": "prev_placenta_abruption",
+      "importance": 0.0
+    },
+    {
+      "feature": "multiple_gestation",
+      "importance": 0.0
+    },
+    {
+      "feature": "placenta_lower",
+      "importance": 0.0
+    }
+  ]
+}

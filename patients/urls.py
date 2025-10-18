@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, cs_prediction_views, pph_prediction_views, pph_prediction_compine_new, neonatal_prediction_views
 
 urlpatterns = [
     # Authentication
@@ -32,7 +32,13 @@ urlpatterns = [
     path('predict-cs/', views.PredictCSView.as_view(), name='predict_cs'),
     path("patients/<identifier>/predict_pph/", views.PredictPPHView.as_view(), name="predict_pph"),
     path("patients/<identifier>/predict_neonatal/", views.PredictNeonatalView.as_view(), name="predict_neonatal"),
-
+    path('new/predict-cs/', cs_prediction_views.predict_patient_by_identifier, name='predict_cs_new'),
+    path('new/prediction-info/', cs_prediction_views.get_cs_prediction_info, name='prediction_info'),
+    path('new/predict-pph/', pph_prediction_views.predict_pph, name='predict_pph_new'),
+    path('new/predict-pph-compine/', pph_prediction_compine_new.predict_pph, name='predict_pph_compine_new'),
+    path('new/predict-neonatal/', neonatal_prediction_views.predict_neonatal_by_identifier, name='predict_neonatal_new'),
+    
+    
     # Analytics Endpoints
     path('analytics/general-indicators/', views.general_indicators, name='general_indicators'),
     path('analytics/booking-status/', views.booking_status, name='booking_status'),

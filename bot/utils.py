@@ -3,7 +3,7 @@ import numpy as np
 import openai
 from typing import List, Tuple
 
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY environment variable not set")
 openai.api_key = OPENAI_API_KEY
@@ -49,10 +49,13 @@ def ask_openai_chat(system_prompt: str, messages: list, max_tokens: int = 512) -
     """
     messages: list of dicts: [{"role": "user"/"assistant"/"system", "content": "..."}]
     """
+    print(11)
     resp = openai.ChatCompletion.create(
         model=CHAT_MODEL,
         messages=[{"role":"system","content":system_prompt}] + messages,
         max_tokens=max_tokens,
         temperature=0.2,
     )
+    print(22)
+    print(resp)
     return resp["choices"][0]["message"]["content"].strip()

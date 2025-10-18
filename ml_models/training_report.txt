@@ -1,0 +1,71 @@
+
+NEONATAL COMPLICATION PREDICTION MODEL - TRAINING REPORT
+======================================================================
+
+Dataset Information:
+- Total Records: 5763
+- Training Samples: 4610
+- Test Samples: 1153
+- Positive Cases (Complications): 1117
+- Negative Cases (No Complications): 4646
+
+Model Performance:
+- AUC-ROC: 0.8744
+- Sensitivity (Recall): 0.7085 (70.85%)
+- Specificity: 1.0000 (100.00%)
+- Precision: 1.0000
+- F1-Score: 0.8294
+
+Top 15 Most Important Features:
+        feature  importance
+   fetal_weight    0.347883
+gestational_age    0.247407
+           iugr    0.216234
+        preterm    0.078529
+      platelets    0.016823
+            bmi    0.014611
+ labor_duration    0.014048
+             hb    0.013493
+            age    0.010777
+       diabetes    0.006623
+          pulse    0.006599
+      gravidity    0.006146
+         parity    0.004616
+     oxygen_sat    0.002514
+    cs_delivery    0.001778
+
+Statistically Significant Risk Factors:
+  - fetal_weight: 34.79%
+  - gestational_age: 24.74%
+  - iugr: 21.62%
+  - preterm: 7.85%
+  - platelets: 1.68%
+  - bmi: 1.46%
+  - labor_duration: 1.40%
+  - hb: 1.35%
+  - age: 1.08%
+  - diabetes: 0.66%
+  - pulse: 0.66%
+  - gravidity: 0.61%
+  - parity: 0.46%
+  - oxygen_sat: 0.25%
+  - cs_delivery: 0.18%
+  - emergency_cs: 0.16%
+  - ctg_abnormal: 0.16%
+  - temp: 0.16%
+  - prolonged_rupture: 0.12%
+  - preeclampsia: 0.10%
+  - multiple_cs: 0.09%
+  - chronic_hypertension: 0.09%
+  - placenta_previa: 0.08%
+  - prom: 0.07%
+  - non_cephalic: 0.07%
+  - ivf_pregnancy: 0.07%
+
+Model Files:
+- Model: ml_models/neonatal_model.pkl
+- Scaler: ml_models/neonatal_scaler.pkl
+- Metadata: ml_models/model_metadata.json
+- ROC Curve: ml_models/roc_curve.png
+
+Training completed at: 2025-10-18T12:22:52.250660
