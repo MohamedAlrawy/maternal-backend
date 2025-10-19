@@ -4,13 +4,17 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15
+    container_name: maternal_db
+    restart: unless-stopped
+    ports:
+      - "75698:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - maternal_network
     environment:
       - POSTGRES_DB=dbtoolmnq1233332g_gg_
-      - POSTGRES_USER=dbtoolmnq1233332g_gg_
+      - POSTGRES_USER=ruijg833tthecjgps_8ksd___
       - POSTGRES_PASSWORD=1@#$$$#!@FDSfsdvkv-smdkfj--skdh++sdihfsd
 
   # Django Backend
