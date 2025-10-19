@@ -1,1 +1,1 @@
-["bmi", "estimated_fetal_weight", "preeclampsia_history", "cs_history_1", "cs_history_2", "cs_history_3plus", "uterine_rupture_history", "grand_multipara", "multiple_gestation", "placenta_previa", "placental_abruption", "severe_anemia", "ivf_icsi", "non_cephalic_presentation", "iugr", "presentation_non_cephalic", "multiple_fetuses", "ctg_category_ii", "ctg_category_iii"]
+["estimated_fetal_weight", "grand_multipara", "multiple_gestation", "severe_anemia", "multiple_fetuses", "ctg_category_ii", "ctg_category_iii"]

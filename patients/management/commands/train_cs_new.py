@@ -77,7 +77,7 @@ class Command(BaseCommand):
         # features['age'] = patient.age or 0
         # features['parity'] = patient.parity or 0
         # features['gravidity'] = patient.gravidity or 0
-        features['bmi'] = float(patient.bmi) if patient.bmi else 0
+        # features['bmi'] = float(patient.bmi) if patient.bmi else 0
         
         # Vital signs
         # features['pulse'] = patient.pulse or 0
@@ -109,21 +109,21 @@ class Command(BaseCommand):
         # features['diabetes'] = self.check_in_json(
         #     patient.menternal_medical, ['diabetes', 'gdm', 'gestational diabetes']
         # )
-        features['preeclampsia_history'] = self.check_in_json(
-            patient.obstetric_history, ['preeclampsia', 'pre-eclampsia']
-        )
-        features['cs_history_1'] = self.check_in_json(
-            patient.obstetric_history, ['previous c-section', '1 cs', 'one cs']
-        )
-        features['cs_history_2'] = self.check_in_json(
-            patient.obstetric_history, ['2 cs', 'two cs']
-        )
-        features['cs_history_3plus'] = self.check_in_json(
-            patient.obstetric_history, ['3 cs', '3+ cs', 'multiple cs', '4 cs', '5 cs']
-        )
-        features['uterine_rupture_history'] = self.check_in_json(
-            patient.obstetric_history, ['uterine rupture', 'rupture']
-        )
+        # features['preeclampsia_history'] = self.check_in_json(
+        #     patient.obstetric_history, ['preeclampsia', 'pre-eclampsia']
+        # )
+        # features['cs_history_1'] = self.check_in_json(
+        #     patient.obstetric_history, ['previous c-section', '1 cs', 'one cs']
+        # )
+        # features['cs_history_2'] = self.check_in_json(
+        #     patient.obstetric_history, ['2 cs', 'two cs']
+        # )
+        # features['cs_history_3plus'] = self.check_in_json(
+        #     patient.obstetric_history, ['3 cs', '3+ cs', 'multiple cs', '4 cs', '5 cs']
+        # )
+        # features['uterine_rupture_history'] = self.check_in_json(
+        #     patient.obstetric_history, ['uterine rupture', 'rupture']
+        # )
         # features['cardiac_disease'] = self.check_in_json(
         #     patient.menternal_medical, ['cardiac', 'heart disease']
         # )
@@ -138,30 +138,30 @@ class Command(BaseCommand):
         features['multiple_gestation'] = self.check_in_json(
             patient.current_pregnancy_menternal, ['multiple gestation', 'twins', 'triplet']
         )
-        features['placenta_previa'] = self.check_in_json(
-            patient.current_pregnancy_menternal, ['placenta previa', 'previa']
-        )
-        features['placental_abruption'] = self.check_in_json(
-            patient.current_pregnancy_menternal, ['abruption', 'placental abruption']
-        )
+        # features['placenta_previa'] = self.check_in_json(
+        #     patient.current_pregnancy_menternal, ['placenta previa', 'previa']
+        # )
+        # features['placental_abruption'] = self.check_in_json(
+        #     patient.current_pregnancy_menternal, ['abruption', 'placental abruption']
+        # )
         features['severe_anemia'] = self.check_in_json(
             patient.current_pregnancy_menternal, ['severe anemia', 'anemia']
         )
-        features['ivf_icsi'] = self.check_in_json(
-            patient.current_pregnancy_menternal, ['ivf', 'icsi']
-        )
+        # features['ivf_icsi'] = self.check_in_json(
+        #     patient.current_pregnancy_menternal, ['ivf', 'icsi']
+        # )
         
         # Fetal factors
-        features['non_cephalic_presentation'] = self.check_in_json(
-            patient.current_pregnancy_fetal, ['breech', 'transverse', 'oblique', 'non-cephalic']
-        )
-        features['iugr'] = self.check_in_json(
-            patient.current_pregnancy_fetal, ['iugr', 'growth restriction']
-        )
+        # features['non_cephalic_presentation'] = self.check_in_json(
+        #     patient.current_pregnancy_fetal, ['breech', 'transverse', 'oblique', 'non-cephalic']
+        # )
+        # features['iugr'] = self.check_in_json(
+        #     patient.current_pregnancy_fetal, ['iugr', 'growth restriction']
+        # )
         
         # Presentation and delivery factors
-        is_non_cephalic = patient.presentation in ['preech', 'transverse', 'oblique']
-        features['presentation_non_cephalic'] = 1 if is_non_cephalic else 0
+        # is_non_cephalic = patient.presentation in ['preech', 'transverse', 'oblique']
+        # features['presentation_non_cephalic'] = 1 if is_non_cephalic else 0
         features['multiple_fetuses'] = 1 if patient.fetus_number in ['twin', 'triplete'] else 0
         
         # CTG category

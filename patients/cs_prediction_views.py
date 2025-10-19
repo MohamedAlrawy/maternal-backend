@@ -357,7 +357,7 @@ def predict_patient_by_identifier(request):
             'patient_id': patient.patient_id,
             'file_number': patient.file_number,
             'patient_name': patient.name,
-            'cs_probability': round(cs_probability, 2),
+            'cs_probability': round(cs_probability/2, 2),
             'prediction_method': 'ml model prediction',
             'reason': reason,
             'confidence': confidence,
@@ -380,8 +380,6 @@ def check_direct_rules(patient):
     matching_rules = []
     
     for rule_key, rule in DIRECT_PREDICTION_RULES.items():
-        print(rule_key, "dddddddddddddddd", rule)
-        print(rule['check'](patient))
         try:
             if rule['check'](patient):
                 matching_rules.append({

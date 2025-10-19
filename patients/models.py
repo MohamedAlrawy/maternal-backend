@@ -384,6 +384,9 @@ class Patient(models.Model):
                 self.current_pregnancy_fetal.append("Preterm labor < 37 weeks")    
         except:
             pass
+
+        if self.parity > 4 and "BMI > 40" not in self.social:
+            self.social.append("Grand multipara (>=5 births)")
         
         if self.bmi > 40 and "BMI > 40" not in self.social:
             self.social.append("BMI > 40")

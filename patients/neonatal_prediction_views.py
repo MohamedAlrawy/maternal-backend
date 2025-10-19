@@ -97,6 +97,7 @@ class NeonatalPredictionService:
         self.scaler = None
         self.metadata = None
         self._load_model()
+        self.patient = None
     
     def _load_model(self):
         """Load trained model, scaler, and metadata"""
@@ -138,6 +139,8 @@ class NeonatalPredictionService:
                 patient = Patient.objects.get(file_number=file_number)
             else:
                 return self._error_response('Either patient_id or file_number required')
+
+            self.patient = patient
             
             # Try direct rules first
             direct_result = self._check_direct_rules(patient)
@@ -167,7 +170,7 @@ class NeonatalPredictionService:
                 probability, model_details = self._predict_ml(features)
                 return self._format_response(
                     patient=patient,
-                    probability=probability,
+                    probability=probability / 3,
                     method='ml_model',
                     model_details=model_details,
                     confidence=self._get_confidence(probability)
@@ -368,6 +371,9 @@ class NeonatalPredictionService:
         """Check if list contains keyword"""
         if not isinstance(lst, list):
             return False
+
+        if keyword == 'Multiple gestation':
+            return any(keyword.lower() in str(item).lower() for item in lst) and int(self.patient.gestational_age.split(" ")[0]) < 37
         return any(keyword.lower() in str(item).lower() for item in lst)
     
     def _get_confidence(self, probability):
