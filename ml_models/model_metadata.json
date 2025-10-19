@@ -1,14 +1,8 @@
 {
   "feature_names": [
-    "age",
-    "bmi",
-    "pulse",
-    "temp",
-    "oxygen_sat",
     "gravidity",
     "parity",
     "gestational_age",
-    "chronic_hypertension",
     "diabetes",
     "multiple_cs",
     "grand_multipara",
@@ -23,18 +17,13 @@
     "iugr",
     "preterm",
     "fetal_weight",
-    "ctg_abnormal",
-    "labor_duration",
-    "prom",
-    "prolonged_rupture",
-    "placenta_location_lower",
     "cs_delivery",
     "emergency_cs",
     "hb",
     "platelets"
   ],
   "label_encoder_dict": {},
-  "trained_date": "2025-10-18T12:22:52.240436",
-  "training_samples": 4610,
+  "trained_date": "2025-10-19T07:13:13.566571",
+  "training_samples": 4611,
   "test_samples": 1153
 }

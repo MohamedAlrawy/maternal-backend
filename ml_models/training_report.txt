@@ -3,64 +3,54 @@ NEONATAL COMPLICATION PREDICTION MODEL - TRAINING REPORT
 ======================================================================
 
 Dataset Information:
-- Total Records: 5763
-- Training Samples: 4610
+- Total Records: 5764
+- Training Samples: 4611
 - Test Samples: 1153
 - Positive Cases (Complications): 1117
-- Negative Cases (No Complications): 4646
+- Negative Cases (No Complications): 4647
 
 Model Performance:
-- AUC-ROC: 0.8744
+- AUC-ROC: 0.8795
 - Sensitivity (Recall): 0.7085 (70.85%)
-- Specificity: 1.0000 (100.00%)
-- Precision: 1.0000
-- F1-Score: 0.8294
+- Specificity: 0.9989 (99.89%)
+- Precision: 0.9937
+- F1-Score: 0.8272
 
 Top 15 Most Important Features:
         feature  importance
-   fetal_weight    0.347883
-gestational_age    0.247407
-           iugr    0.216234
-        preterm    0.078529
-      platelets    0.016823
-            bmi    0.014611
- labor_duration    0.014048
-             hb    0.013493
-            age    0.010777
-       diabetes    0.006623
-          pulse    0.006599
-      gravidity    0.006146
-         parity    0.004616
-     oxygen_sat    0.002514
-    cs_delivery    0.001778
+   fetal_weight    0.317764
+gestational_age    0.270559
+           iugr    0.253363
+        preterm    0.090811
+      platelets    0.020616
+             hb    0.015827
+       diabetes    0.008816
+      gravidity    0.007590
+         parity    0.005163
+    cs_delivery    0.001977
+   emergency_cs    0.001925
+    multiple_cs    0.001389
+   preeclampsia    0.001177
+  ivf_pregnancy    0.001012
+   non_cephalic    0.000909
 
 Statistically Significant Risk Factors:
-  - fetal_weight: 34.79%
-  - gestational_age: 24.74%
-  - iugr: 21.62%
-  - preterm: 7.85%
-  - platelets: 1.68%
-  - bmi: 1.46%
-  - labor_duration: 1.40%
-  - hb: 1.35%
-  - age: 1.08%
-  - diabetes: 0.66%
-  - pulse: 0.66%
-  - gravidity: 0.61%
-  - parity: 0.46%
-  - oxygen_sat: 0.25%
-  - cs_delivery: 0.18%
-  - emergency_cs: 0.16%
-  - ctg_abnormal: 0.16%
-  - temp: 0.16%
-  - prolonged_rupture: 0.12%
-  - preeclampsia: 0.10%
-  - multiple_cs: 0.09%
-  - chronic_hypertension: 0.09%
-  - placenta_previa: 0.08%
-  - prom: 0.07%
-  - non_cephalic: 0.07%
-  - ivf_pregnancy: 0.07%
+  - fetal_weight: 31.78%
+  - gestational_age: 27.06%
+  - iugr: 25.34%
+  - preterm: 9.08%
+  - platelets: 2.06%
+  - hb: 1.58%
+  - diabetes: 0.88%
+  - gravidity: 0.76%
+  - parity: 0.52%
+  - cs_delivery: 0.20%
+  - emergency_cs: 0.19%
+  - multiple_cs: 0.14%
+  - preeclampsia: 0.12%
+  - ivf_pregnancy: 0.10%
+  - non_cephalic: 0.09%
+  - placenta_previa: 0.07%
 
 Model Files:
 - Model: ml_models/neonatal_model.pkl
@@ -68,4 +58,4 @@ Model Files:
 - Metadata: ml_models/model_metadata.json
 - ROC Curve: ml_models/roc_curve.png
 
-Training completed at: 2025-10-18T12:22:52.250660
+Training completed at: 2025-10-19T07:13:13.570635

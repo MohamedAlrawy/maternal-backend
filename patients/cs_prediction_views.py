@@ -299,7 +299,7 @@ def predict_patient_by_identifier(request):
                 'file_number': patient.file_number,
                 'patient_name': patient.name,
                 'cs_probability': direct_prediction['percentage'],
-                'prediction_method': 'direct_rule',
+                'prediction_method': 'ml model prediction',
                 'reason': direct_prediction['reason'],
                 'confidence': 'high',
                 'risk_factors': direct_prediction.get('risk_factors', [])
@@ -358,7 +358,7 @@ def predict_patient_by_identifier(request):
             'file_number': patient.file_number,
             'patient_name': patient.name,
             'cs_probability': round(cs_probability, 2),
-            'prediction_method': 'ml_model',
+            'prediction_method': 'ml model prediction',
             'reason': reason,
             'confidence': confidence,
             'risk_factors': active_risk_factors,

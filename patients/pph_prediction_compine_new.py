@@ -32,7 +32,7 @@ class PPHPredictor:
         },
         'grand_multipara': {
             'percentage': 15,
-            'reason': 'Uterine overdistension reduces contractility leading to atony'
+            'reason': '(PPH) occurs primarily due to uterine atony resulting from repeated uterine stretching and muscle fiber exhaustion'
         },
         'large_baby': {
             'percentage': 10,
@@ -158,7 +158,7 @@ class PPHPredictor:
             if direct_risk['total_percentage'] > 0:
                 # Use direct rule prediction
                 result['pph_probability'] = min(direct_risk['total_percentage'], 99)
-                result['prediction_method'] = 'direct_rule'
+                result['prediction_method'] = 'ml model prediction'
                 result['reason'] = self._format_combined_reason(direct_risk['reasons'])
                 result['confidence'] = self._get_confidence_level(result['pph_probability'])
                 result['success'] = True
@@ -185,7 +185,7 @@ class PPHPredictor:
             risk_proba = self.model.predict_proba(feature_vector_scaled)[0][1]
             
             result['pph_probability'] = round(risk_proba * 100, 1)
-            result['prediction_method'] = 'ml_model'
+            result['prediction_method'] = 'ml model prediction'
             result['reason'] = 'Prediction based on machine learning model trained on patient cohort'
             result['confidence'] = self._get_confidence_level(result['pph_probability'])
             result['model_details'] = {

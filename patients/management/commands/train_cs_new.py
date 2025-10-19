@@ -74,41 +74,41 @@ class Command(BaseCommand):
         features = {}
         
         # Basic demographics
-        features['age'] = patient.age or 0
-        features['parity'] = patient.parity or 0
-        features['gravidity'] = patient.gravidity or 0
+        # features['age'] = patient.age or 0
+        # features['parity'] = patient.parity or 0
+        # features['gravidity'] = patient.gravidity or 0
         features['bmi'] = float(patient.bmi) if patient.bmi else 0
         
         # Vital signs
-        features['pulse'] = patient.pulse or 0
-        features['temp'] = float(patient.temp) if patient.temp else 0
-        features['oxygen_sat'] = patient.oxygen_sat or 0
+        # features['pulse'] = patient.pulse or 0
+        # features['temp'] = float(patient.temp) if patient.temp else 0
+        # features['oxygen_sat'] = patient.oxygen_sat or 0
         
-        # Blood pressure
-        try:
-            bp_parts = patient.bp.split('/') if patient.bp else ['0', '0']
-            features['systolic_bp'] = int(bp_parts[0]) if len(bp_parts) > 0 else 0
-            features['diastolic_bp'] = int(bp_parts[1]) if len(bp_parts) > 1 else 0
-        except:
-            features['systolic_bp'] = 0
-            features['diastolic_bp'] = 0
+        # # Blood pressure
+        # try:
+        #     bp_parts = patient.bp.split('/') if patient.bp else ['0', '0']
+        #     features['systolic_bp'] = int(bp_parts[0]) if len(bp_parts) > 0 else 0
+        #     features['diastolic_bp'] = int(bp_parts[1]) if len(bp_parts) > 1 else 0
+        # except:
+        #     features['systolic_bp'] = 0
+        #     features['diastolic_bp'] = 0
         
         # Fetal weight
         features['estimated_fetal_weight'] = patient.estimated_fetal_weight_by_gm or 0
         
-        # Labor duration
-        features['labor_duration'] = patient.labor_duration_hours or 0
+        # # Labor duration
+        # features['labor_duration'] = patient.labor_duration_hours or 0
         
-        # Cervical dilation at admission
-        features['cervical_dilation_admission'] = patient.cervical_dilatation_at_admission or 0
+        # # Cervical dilation at admission
+        # features['cervical_dilation_admission'] = patient.cervical_dilatation_at_admission or 0
         
-        # Binary flags for medical history
-        features['chronic_hypertension'] = self.check_in_json(
-            patient.menternal_medical, ['chronic hypertension', 'hypertension']
-        )
-        features['diabetes'] = self.check_in_json(
-            patient.menternal_medical, ['diabetes', 'gdm', 'gestational diabetes']
-        )
+        # # Binary flags for medical history
+        # features['chronic_hypertension'] = self.check_in_json(
+        #     patient.menternal_medical, ['chronic hypertension', 'hypertension']
+        # )
+        # features['diabetes'] = self.check_in_json(
+        #     patient.menternal_medical, ['diabetes', 'gdm', 'gestational diabetes']
+        # )
         features['preeclampsia_history'] = self.check_in_json(
             patient.obstetric_history, ['preeclampsia', 'pre-eclampsia']
         )
@@ -124,12 +124,12 @@ class Command(BaseCommand):
         features['uterine_rupture_history'] = self.check_in_json(
             patient.obstetric_history, ['uterine rupture', 'rupture']
         )
-        features['cardiac_disease'] = self.check_in_json(
-            patient.menternal_medical, ['cardiac', 'heart disease']
-        )
-        features['hiv_immunocompromised'] = self.check_in_json(
-            patient.menternal_medical, ['hiv', 'immunocompromised']
-        )
+        # features['cardiac_disease'] = self.check_in_json(
+        #     patient.menternal_medical, ['cardiac', 'heart disease']
+        # )
+        # features['hiv_immunocompromised'] = self.check_in_json(
+        #     patient.menternal_medical, ['hiv', 'immunocompromised']
+        # )
         features['grand_multipara'] = self.check_in_json(
             patient.social, ['grand multipara', '>=5', '>5']
         )
@@ -169,16 +169,16 @@ class Command(BaseCommand):
         features['ctg_category_iii'] = 1 if patient.ctg_category == 'category_iii_pathological' else 0
         
         # Bishop score / cervix favorability
-        features['cervix_unfavorable'] = 1 if (
-            patient.cervix_favrable_for_induction == 'unfavorable_bishop_score_less_6'
-        ) else 0
+        # features['cervix_unfavorable'] = 1 if (
+        #     patient.cervix_favrable_for_induction == 'unfavorable_bishop_score_less_6'
+        # ) else 0
         
         # Hemoglobin
-        features['hb'] = patient.hb_g_dl or 0
+        # features['hb'] = patient.hb_g_dl or 0
         
         # BMI categories
-        features['bmi_35_39_5'] = 1 if (35 <= features['bmi'] < 39.5) else 0
-        features['bmi_40_plus'] = 1 if features['bmi'] >= 40 else 0
+        # features['bmi_35_39_5'] = 1 if (35 <= features['bmi'] < 39.5) else 0
+        # features['bmi_40_plus'] = 1 if features['bmi'] >= 40 else 0
         
         return features
 

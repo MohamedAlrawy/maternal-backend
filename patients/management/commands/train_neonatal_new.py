@@ -192,13 +192,13 @@ Training completed at: {datetime.now().isoformat()}
                 features = {}
                 
                 # Basic demographics
-                features['age'] = float(row.get('age') or 0)
-                features['bmi'] = float(row.get('bmi') or 0)
+                # features['age'] = float(row.get('age') or 0)
+                # features['bmi'] = float(row.get('bmi') or 0)
                 
                 # Vital signs
-                features['pulse'] = float(row.get('pulse') or 0)
-                features['temp'] = float(row.get('temp') or 0)
-                features['oxygen_sat'] = float(row.get('oxygen_sat') or 0)
+                # features['pulse'] = float(row.get('pulse') or 0)
+                # features['temp'] = float(row.get('temp') or 0)
+                # features['oxygen_sat'] = float(row.get('oxygen_sat') or 0)
                 
                 # Pregnancy factors
                 features['gravidity'] = float(row.get('gravidity') or 0)
@@ -212,7 +212,7 @@ Training completed at: {datetime.now().isoformat()}
                 current_pregnancy_fetal = row.get('current_pregnancy_fetal') or []
                 social = row.get('social') or []
                 
-                features['chronic_hypertension'] = 1 if self._contains_keyword(menternal_medical, 'Chronic hypertension') else 0
+                # features['chronic_hypertension'] = 1 if self._contains_keyword(menternal_medical, 'Chronic hypertension') else 0
                 features['diabetes'] = 1 if self._contains_keyword(menternal_medical, 'Diabetes') else 0
                 features['multiple_cs'] = 1 if self._contains_keyword(obstetric_history, 'Multiple c-sections') else 0
                 features['grand_multipara'] = 1 if self._contains_keyword(social, 'Grand multipara') else 0
@@ -233,11 +233,11 @@ Training completed at: {datetime.now().isoformat()}
                 features['fetal_weight'] = float(row.get('estimated_fetal_weight_by_gm') or 0)
                 
                 # Delivery factors
-                features['ctg_abnormal'] = 1 if row.get('ctg_category') in ['category_ii_suspicious', 'category_iii_pathological'] else 0
-                features['labor_duration'] = float(row.get('labor_duration_hours') or 0)
-                features['prom'] = 1 if row.get('indication_of_induction') == 'prelabor_rupture_of_membranes_prom' else 0
-                features['prolonged_rupture'] = 1 if row.get('rupture_duration_hour') in ['18_24_hours', 'more_than_24_hours_prolonged_rupture'] else 0
-                features['placenta_location_lower'] = 1 if row.get('placenta_location') == 'lower' else 0
+                # features['ctg_abnormal'] = 1 if row.get('ctg_category') in ['category_ii_suspicious', 'category_iii_pathological'] else 0
+                # features['labor_duration'] = float(row.get('labor_duration_hours') or 0)
+                # features['prom'] = 1 if row.get('indication_of_induction') == 'prelabor_rupture_of_membranes_prom' else 0
+                # features['prolonged_rupture'] = 1 if row.get('rupture_duration_hour') in ['18_24_hours', 'more_than_24_hours_prolonged_rupture'] else 0
+                # features['placenta_location_lower'] = 1 if row.get('placenta_location') == 'lower' else 0
                 
                 # Mode of delivery
                 features['cs_delivery'] = 1 if row.get('mode_of_delivery') == 'cs' else 0
