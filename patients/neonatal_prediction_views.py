@@ -397,7 +397,7 @@ class NeonatalPredictionService:
             'neonatal_complication_probability': probability,
             'average_probability': avg_probability or probability,
             'prediction_method': "ml model prediction",
-            'reason': '; '.join(reasons) if reasons else 'No specific risk factors identified',
+            'reason': '; '.join(reasons) if reasons else 'Prediction based on machine learning model trained on historical data',
             'confidence': confidence or 'low',
             'risk_factors': risk_factors or [],
             'all_reasons': reasons or [],

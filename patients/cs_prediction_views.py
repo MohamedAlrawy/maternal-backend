@@ -359,7 +359,7 @@ def predict_patient_by_identifier(request):
             'patient_name': patient.name,
             'cs_probability': round(cs_probability/2, 2),
             'prediction_method': 'ml model prediction',
-            'reason': reason,
+            'reason': 'Prediction based on machine learning model trained on historical data',
             'confidence': confidence,
             'risk_factors': active_risk_factors,
             'note': 'Prediction based on machine learning model trained on historical data'
