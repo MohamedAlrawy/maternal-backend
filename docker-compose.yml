@@ -18,7 +18,7 @@ services:
       - POSTGRES_PASSWORD=1@#$$$#!@FDSfsdvkv-smdkfj--skdh++sdihfsd
     
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ruijg833tthecjgps_8ksd___}"]
       interval: 10s
       timeout: 5s
       retries: 5
