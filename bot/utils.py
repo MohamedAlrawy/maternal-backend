@@ -3,7 +3,7 @@ import numpy as np
 import openai
 from typing import List, Tuple
 
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY environment variable not set")
 openai.api_key = OPENAI_API_KEY

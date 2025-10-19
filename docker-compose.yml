@@ -13,9 +13,10 @@ services:
     networks:
       - maternal_network
     environment:
-      - POSTGRES_DB=dbtoolmnq1233332g_gg_
-      - POSTGRES_USER=ruijg833tthecjgps_8ksd___
-      - POSTGRES_PASSWORD=1@#$$$#!@FDSfsdvkv-smdkfj--skdh++sdihfsd
+      - POSTGRES_DB=hgurp983nvh11
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1@#$$$#!@fdsfsdvkv-smdkfj--skdh++sdihfsd
+      - DB_NAME=dbtoolmnq1233332g_gg_
     
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ruijg833tthecjgps_8ksd___}"]
