@@ -1,5 +1,15 @@
 from django.urls import path
 from . import views, cs_prediction_views, pph_prediction_views, pph_prediction_compine_new, neonatal_prediction_views
+from .neonatal.neonatal_prediction_api import (
+    predict_neonatal_complication,
+)
+from .pph.pph_views import (
+    get_model_report,
+    predict_pph,
+)
+from .cs.cs_views import (
+    predict_cs_api_view,
+)
 
 urlpatterns = [
     # Authentication
@@ -37,7 +47,9 @@ urlpatterns = [
     path('new/predict-pph/', pph_prediction_views.predict_pph, name='predict_pph_new'),
     path('new/predict-pph-compine/', pph_prediction_compine_new.predict_pph, name='predict_pph_compine_new'),
     path('new/predict-neonatal/', neonatal_prediction_views.predict_neonatal_by_identifier, name='predict_neonatal_new'),
-    
+    path('grouped/predict-neonatal-api/', predict_neonatal_complication, name='predict_neonatal_grouped'),
+    path('grouped/predict-pph-api/', predict_pph, name='predict_pph_grouped'),
+    path('grouped/predict-cs-api/', predict_cs_api_view, name='predict_cs_api'),
     
     # Analytics Endpoints
     path('analytics/general-indicators/', views.general_indicators, name='general_indicators'),

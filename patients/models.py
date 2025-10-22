@@ -372,6 +372,31 @@ class Patient(models.Model):
         return self.bp
     
     def save(self, *args, **kwargs):
+        self.bmi = round(float(self.weight) / (float(self.height) / 100) ** 2, 2)
+        if self.presentation and self.presentation != "cephlic":
+            self.current_pregnancy_fetal.append("Non-cephalic presentation") if "Non-cephalic presentation" not in self.current_pregnancy_fetal else None
+
+        elif self.presentation and self.presentation == "cephlic" and "Non-cephalic presentation" in self.current_pregnancy_fetal:
+            self.current_pregnancy_fetal.remove("Non-cephalic presentation")
+
+        if self.fetus_number and self.fetus_number != "single":
+            self.current_pregnancy_menternal.append("Multiple gestation") if "Multiple gestation" not in self.current_pregnancy_menternal else None
+
+        elif self.fetus_number and self.fetus_number == "single" and "Multiple gestation" in self.current_pregnancy_menternal:
+            self.current_pregnancy_menternal.remove("Multiple gestation")
+
+        if self.liquor and self.liquor == "polihydraminos":
+            self.current_pregnancy_menternal.append("polihydraminos") if "polihydraminos" not in self.current_pregnancy_menternal else None    
+
+        if self.liquor and self.liquor == "oligohydraminos":
+            self.current_pregnancy_menternal.append("oligohydraminos") if "oligohydraminos" not in self.current_pregnancy_menternal else None
+
+        if self.liquor and self.liquor != "polihydraminos" and "polihydraminos" in self.current_pregnancy_menternal:
+            self.current_pregnancy_menternal.remove("polihydraminos")
+
+        if self.liquor and self.liquor != "oligohydraminos" and "oligohydraminos" in self.current_pregnancy_menternal:
+            self.current_pregnancy_menternal.remove("oligohydraminos")
+
         # Calculate BMI if not provided
         if self.height and self.weight and not self.bmi:
             height_m = self.height / 100
@@ -385,7 +410,7 @@ class Patient(models.Model):
         except:
             pass
 
-        if self.parity > 4 and "BMI > 40" not in self.social:
+        if self.parity > 4 and "Grand multipara (>=5 births)" not in self.social:
             self.social.append("Grand multipara (>=5 births)")
         
         if self.bmi > 40 and "BMI > 40" not in self.social:

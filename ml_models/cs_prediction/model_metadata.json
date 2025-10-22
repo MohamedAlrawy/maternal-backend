@@ -1,0 +1,77 @@
+{
+  "trained_at": "2025-10-22T18:45:51.230198",
+  "feature_names": [
+    "age",
+    "bmi",
+    "bmi_35_to_40",
+    "bmi_over_40",
+    "chronic_hypertension",
+    "diabetes",
+    "grand_multipara",
+    "non_cephalic_presentation",
+    "multiple_gestation",
+    "cervical_dilatation",
+    "fetal_weight",
+    "macrosomia",
+    "labor_duration"
+  ],
+  "metrics": {
+    "auc": 0.9339220769414696,
+    "sensitivity": 0.8449781659388647,
+    "specificity": 0.9942363112391931
+  },
+  "feature_importance": [
+    {
+      "feature": "cervical_dilatation",
+      "importance": 0.519277121561003
+    },
+    {
+      "feature": "labor_duration",
+      "importance": 0.40951356664196864
+    },
+    {
+      "feature": "multiple_gestation",
+      "importance": 0.020479382989975384
+    },
+    {
+      "feature": "non_cephalic_presentation",
+      "importance": 0.016814248532456708
+    },
+    {
+      "feature": "fetal_weight",
+      "importance": 0.012984005948077679
+    },
+    {
+      "feature": "bmi",
+      "importance": 0.009527927784341068
+    },
+    {
+      "feature": "age",
+      "importance": 0.009178047618244667
+    },
+    {
+      "feature": "diabetes",
+      "importance": 0.0005551163184414432
+    },
+    {
+      "feature": "bmi_35_to_40",
+      "importance": 0.0005054860914251368
+    },
+    {
+      "feature": "chronic_hypertension",
+      "importance": 0.000470165276222048
+    },
+    {
+      "feature": "macrosomia",
+      "importance": 0.00041806273607285335
+    },
+    {
+      "feature": "bmi_over_40",
+      "importance": 0.0002768685017714162
+    },
+    {
+      "feature": "grand_multipara",
+      "importance": 0.0
+    }
+  ]
+}

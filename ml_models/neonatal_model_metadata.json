@@ -1,0 +1,255 @@
+{
+  "model_type": "RandomForestClassifier",
+  "training_date": "2025-10-20T20:40:38.628974",
+  "n_samples": 5753,
+  "n_features": 118,
+  "feature_columns": [
+    "age",
+    "height",
+    "weight",
+    "bmi",
+    "gravidity",
+    "parity",
+    "abortion",
+    "booking",
+    "blood_group",
+    "pulse",
+    "temp",
+    "oxygen_sat",
+    "case_type",
+    "room",
+    "stage",
+    "duration",
+    "menternal_medical",
+    "obstetric_history",
+    "current_pregnancy_menternal",
+    "current_pregnancy_fetal",
+    "social",
+    "cervical_dilatation_at_admission",
+    "labor_duration_hours",
+    "fully_dilated_cervix",
+    "maternal_death",
+    "eclampsia",
+    "hellp_syndrome",
+    "acute_kidney_injury",
+    "sever_pph",
+    "prolonged_hospital_stay_more_4_days",
+    "blood_transfusion",
+    "emergency_ceasrean_section",
+    "placental_abruption",
+    "ceasrean_hysterectomy",
+    "rupture_uterus",
+    "readmission_within_30d",
+    "vte_postpartum",
+    "infection_endometritis",
+    "wound_complication",
+    "icu_admission",
+    "los_by_days",
+    "ward_admissin_days",
+    "icu_admission_days",
+    "cost",
+    "birth_weight",
+    "apgar_score",
+    "neonatal_death",
+    "preterm_birth_less_37_weeks",
+    "congenital_anomalies",
+    "hie",
+    "nicu_admission",
+    "birth_injuries",
+    "gender",
+    "placenta_location",
+    "liquor",
+    "estimated_fetal_weight_by_gm",
+    "presentation",
+    "fetus_number",
+    "ga_interval",
+    "type_of_labor",
+    "mode_of_delivery",
+    "perineum_integrity",
+    "instrumental_delivery",
+    "vbac",
+    "type_of_cs",
+    "cs_indication",
+    "total_number_of_cs",
+    "parity_status",
+    "type_of_anasthesia",
+    "blood_loss",
+    "indication_of_induction",
+    "induction_method",
+    "cervix_favrable_for_induction",
+    "membrane_status",
+    "rupture_duration_hour",
+    "liquor_2",
+    "ctg_category",
+    "hb_g_dl",
+    "platelets_x10e9l",
+    "ga_weeks_parsed",
+    "age_high_risk",
+    "age_very_young",
+    "age_very_advanced",
+    "ga_weeks",
+    "preterm",
+    "very_preterm",
+    "extremely_preterm",
+    "postterm",
+    "grand_multipara",
+    "primipara",
+    "bmi_high",
+    "bmi_low",
+    "chronic_hypertension",
+    "diabetes",
+    "multiple_cs",
+    "placenta_abruption",
+    "placenta_previa",
+    "multiple_gestation",
+    "preeclampsia",
+    "severe_anemia",
+    "ivf_pregnancy",
+    "iugr",
+    "non_cephalic",
+    "preterm_labor",
+    "grand_multipara_social",
+    "ctg_pathological",
+    "ctg_suspicious",
+    "polyhydramnios",
+    "oligohydramnios",
+    "macrosomia",
+    "low_fetal_weight",
+    "prolonged_rupture",
+    "prom_induction",
+    "emergency_cs",
+    "bp_systolic",
+    "hypertensive_bp",
+    "severe_anemia_hb",
+    "moderate_anemia_hb"
+  ],
+  "auc": 0.9939328780229043,
+  "sensitivity": 0.9388646288209607,
+  "specificity": 0.9967462039045553,
+  "feature_importance": [
+    {
+      "feature": "nicu_admission",
+      "importance": 0.38507735692919753
+    },
+    {
+      "feature": "estimated_fetal_weight_by_gm",
+      "importance": 0.1078388205974206
+    },
+    {
+      "feature": "iugr",
+      "importance": 0.08041976956368532
+    },
+    {
+      "feature": "birth_weight",
+      "importance": 0.054038186121669086
+    },
+    {
+      "feature": "low_fetal_weight",
+      "importance": 0.05344182809775111
+    },
+    {
+      "feature": "ga_weeks",
+      "importance": 0.053407824927133876
+    },
+    {
+      "feature": "preterm_birth_less_37_weeks",
+      "importance": 0.047255830498673754
+    },
+    {
+      "feature": "ga_weeks_parsed",
+      "importance": 0.04636391796320848
+    },
+    {
+      "feature": "preterm",
+      "importance": 0.03385268973183297
+    },
+    {
+      "feature": "very_preterm",
+      "importance": 0.024829988365431054
+    },
+    {
+      "feature": "congenital_anomalies",
+      "importance": 0.017772011388128738
+    },
+    {
+      "feature": "birth_injuries",
+      "importance": 0.010206430649816092
+    },
+    {
+      "feature": "platelets_x10e9l",
+      "importance": 0.006427072283393607
+    },
+    {
+      "feature": "bmi",
+      "importance": 0.005328443041461989
+    },
+    {
+      "feature": "weight",
+      "importance": 0.005249736269103714
+    },
+    {
+      "feature": "diabetes",
+      "importance": 0.005219276100883245
+    },
+    {
+      "feature": "bp_systolic",
+      "importance": 0.00511129016788694
+    },
+    {
+      "feature": "hb_g_dl",
+      "importance": 0.005110773480287537
+    },
+    {
+      "feature": "labor_duration_hours",
+      "importance": 0.004677671390528184
+    },
+    {
+      "feature": "polyhydramnios",
+      "importance": 0.004233219640766948
+    }
+  ],
+  "risk_factors": [
+    {
+      "feature": "low_fetal_weight",
+      "odds_ratio": 514.9735614307932,
+      "cases_with_factor": 504,
+      "cases_without_factor": 643
+    },
+    {
+      "feature": "birth_weight",
+      "odds_ratio": 5.248854961832061,
+      "cases_with_factor": 1146,
+      "cases_without_factor": 1
+    },
+    {
+      "feature": "diabetes",
+      "odds_ratio": 2.077331532009132,
+      "cases_with_factor": 54,
+      "cases_without_factor": 1093
+    },
+    {
+      "feature": "polyhydramnios",
+      "odds_ratio": 1.8621399176954732,
+      "cases_with_factor": 37,
+      "cases_without_factor": 1110
+    },
+    {
+      "feature": "infection_endometritis",
+      "odds_ratio": 1.7525142441971626,
+      "cases_with_factor": 10,
+      "cases_without_factor": 1137
+    },
+    {
+      "feature": "acute_kidney_injury",
+      "odds_ratio": 1.6083989501312337,
+      "cases_with_factor": 4,
+      "cases_without_factor": 1143
+    },
+    {
+      "feature": "hellp_syndrome",
+      "odds_ratio": 1.5072115384615385,
+      "cases_with_factor": 3,
+      "cases_without_factor": 1144
+    }
+  ]
+}

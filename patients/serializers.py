@@ -90,12 +90,12 @@ class PatientSerializer(serializers.ModelSerializer):
             'perineum_integrity', 'instrumental_delivery', 'vbac', 'type_of_cs', 'cs_indication',
             'total_number_of_cs', 'parity_status', 'robson_classification', 'type_of_anasthesia',
             'blood_loss', 'indication_of_induction', 'induction_method', 'cervix_favrable_for_induction',
-            'membrane_status', 'rupture_duration_hour', 'liquor_2', 'ctg_category',
+            'membrane_status', 'rupture_duration_hour', 'liquor', 'liquor_2', 'ctg_category',
             'doctor_name', 'hb_g_dl', 'platelets_x10e9l',
             
             'created_at', 'updated_at', 'created_by_name',
             # Added related babies
-            'babies',
+            'babies', 'estimated_fetal_weight_by_gm'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'bmi']
     

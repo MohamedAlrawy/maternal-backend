@@ -1,0 +1,159 @@
+{
+  "timestamp": "2025-10-21T15:43:32.046300",
+  "training_samples": 4604,
+  "test_samples": 1152,
+  "total_samples": 5756,
+  "pph_cases": 1217,
+  "non_pph_cases": 4539,
+  "auc": 0.831,
+  "sensitivity": 0.6721,
+  "specificity": 0.8833,
+  "accuracy": 0.8385,
+  "precision": 0.6074,
+  "tp": 164,
+  "tn": 802,
+  "fp": 106,
+  "fn": 80,
+  "significant_features": [
+    {
+      "feature": "cs_type",
+      "importance": 0.37021622572741436
+    },
+    {
+      "feature": "labor_duration_hours",
+      "importance": 0.18245457522394598
+    },
+    {
+      "feature": "placenta_location",
+      "importance": 0.06801594114468526
+    },
+    {
+      "feature": "labor_type",
+      "importance": 0.06686578252432776
+    },
+    {
+      "feature": "hb",
+      "importance": 0.0517247567180316
+    },
+    {
+      "feature": "estimated_fetal_weight",
+      "importance": 0.051222752926041115
+    },
+    {
+      "feature": "platelets",
+      "importance": 0.049281090016839835
+    },
+    {
+      "feature": "bmi",
+      "importance": 0.04654240907477072
+    },
+    {
+      "feature": "previous_cs",
+      "importance": 0.0366132294546053
+    },
+    {
+      "feature": "age",
+      "importance": 0.03646414847325863
+    }
+  ],
+  "feature_names": [
+    "age",
+    "bmi",
+    "chronic_hypertension_blood_transfusion",
+    "hb",
+    "platelets",
+    "parity",
+    "previous_cs",
+    "polyhydramnios",
+    "multiple_gestation",
+    "placenta_location",
+    "estimated_fetal_weight",
+    "labor_type",
+    "cs_type",
+    "labor_duration_hours"
+  ],
+  "all_features_importance": [
+    {
+      "feature": "cs_type",
+      "importance": 0.37021622572741436
+    },
+    {
+      "feature": "labor_duration_hours",
+      "importance": 0.18245457522394598
+    },
+    {
+      "feature": "placenta_location",
+      "importance": 0.06801594114468526
+    },
+    {
+      "feature": "labor_type",
+      "importance": 0.06686578252432776
+    },
+    {
+      "feature": "hb",
+      "importance": 0.0517247567180316
+    },
+    {
+      "feature": "estimated_fetal_weight",
+      "importance": 0.051222752926041115
+    },
+    {
+      "feature": "platelets",
+      "importance": 0.049281090016839835
+    },
+    {
+      "feature": "bmi",
+      "importance": 0.04654240907477072
+    },
+    {
+      "feature": "previous_cs",
+      "importance": 0.0366132294546053
+    },
+    {
+      "feature": "age",
+      "importance": 0.03646414847325863
+    },
+    {
+      "feature": "parity",
+      "importance": 0.021343037651466674
+    },
+    {
+      "feature": "multiple_gestation",
+      "importance": 0.009772241215112583
+    },
+    {
+      "feature": "polyhydramnios",
+      "importance": 0.005306896052926048
+    },
+    {
+      "feature": "chronic_hypertension_blood_transfusion",
+      "importance": 0.004176913796574226
+    }
+  ],
+  "thresholds": [
+    Infinity,
+    0.9798250495195576,
+    0.8890435743622589,
+    0.8849774322603271,
+    0.8845493418428733,
+    0.8832339802229028,
+    0.8795675304499379,
+    0.8790445472469522,
+    0.8726436879165113,
+    0.8711103492596745
+  ],
+  "calibration_settings": {
+    "description": "AGGRESSIVE calibration - ML predictions heavily reduced without direct rules",
+    "reduction_factor": 0.15,
+    "min_threshold": 2.0,
+    "max_threshold": 8.0,
+    "note": "Max prediction for ML-only cases is 8%. Direct rules override this cap.",
+    "examples": [
+      "Raw 20% \u2192 Calibrated 3% (min floor)",
+      "Raw 40% \u2192 Calibrated 6%",
+      "Raw 60% \u2192 Calibrated 8% (max cap)",
+      "Raw 80% \u2192 Calibrated 8% (max cap)",
+      "Raw 100% \u2192 Calibrated 8% (max cap)"
+    ]
+  }
+}

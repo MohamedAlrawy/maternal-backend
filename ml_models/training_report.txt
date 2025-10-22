@@ -1,61 +1,102 @@
 
-NEONATAL COMPLICATION PREDICTION MODEL - TRAINING REPORT
-======================================================================
+=============================================================================
+        NEONATAL COMPLICATION PREDICTION MODEL - TRAINING REPORT
+=============================================================================
 
-Dataset Information:
-- Total Records: 5764
-- Training Samples: 4611
-- Test Samples: 1153
-- Positive Cases (Complications): 1117
-- Negative Cases (No Complications): 4647
+AI Task: Prediction of neonatal complications (NICU admission, HIE, low Apgar,
+         low birth weight, neonatal death, birth injuries, congenital anomalies)
 
-Model Performance:
-- AUC-ROC: 0.8795
-- Sensitivity (Recall): 0.7085 (70.85%)
-- Specificity: 0.9989 (99.89%)
-- Precision: 0.9937
-- F1-Score: 0.8272
+Training Date: 2025-10-20T20:40:38.628974
+Model Type: RandomForestClassifier
+Training Samples: 5753
+Number of Features: 118
 
-Top 15 Most Important Features:
-        feature  importance
-   fetal_weight    0.317764
-gestational_age    0.270559
-           iugr    0.253363
-        preterm    0.090811
-      platelets    0.020616
-             hb    0.015827
-       diabetes    0.008816
-      gravidity    0.007590
-         parity    0.005163
-    cs_delivery    0.001977
-   emergency_cs    0.001925
-    multiple_cs    0.001389
-   preeclampsia    0.001177
-  ivf_pregnancy    0.001012
-   non_cephalic    0.000909
+-----------------------------------------------------------------------------
+                        MODEL PERFORMANCE METRICS
+-----------------------------------------------------------------------------
 
-Statistically Significant Risk Factors:
-  - fetal_weight: 31.78%
-  - gestational_age: 27.06%
-  - iugr: 25.34%
-  - preterm: 9.08%
-  - platelets: 2.06%
-  - hb: 1.58%
-  - diabetes: 0.88%
-  - gravidity: 0.76%
-  - parity: 0.52%
-  - cs_delivery: 0.20%
-  - emergency_cs: 0.19%
-  - multiple_cs: 0.14%
-  - preeclampsia: 0.12%
-  - ivf_pregnancy: 0.10%
-  - non_cephalic: 0.09%
-  - placenta_previa: 0.07%
+AUC (Area Under ROC Curve): 0.994
+  → Excellent: >0.9 | Good: 0.8-0.9 | Fair: 0.7-0.8 | Poor: <0.7
 
-Model Files:
-- Model: ml_models/neonatal_model.pkl
-- Scaler: ml_models/neonatal_scaler.pkl
-- Metadata: ml_models/model_metadata.json
-- ROC Curve: ml_models/roc_curve.png
+Sensitivity (Recall): 0.939
+  → Proportion of actual complications correctly identified
 
-Training completed at: 2025-10-19T18:45:53.919290
+Specificity: 0.997
+  → Proportion of non-complications correctly identified
+
+-----------------------------------------------------------------------------
+                  STATISTICALLY SIGNIFICANT RISK FACTORS
+-----------------------------------------------------------------------------
+
+Top Risk Factors (by Odds Ratio):
+
+1. low_fetal_weight
+   Odds Ratio: 514.97
+   Cases with factor: 504
+   Cases without factor: 643
+
+2. birth_weight
+   Odds Ratio: 5.25
+   Cases with factor: 1146
+   Cases without factor: 1
+
+3. diabetes
+   Odds Ratio: 2.08
+   Cases with factor: 54
+   Cases without factor: 1093
+
+4. polyhydramnios
+   Odds Ratio: 1.86
+   Cases with factor: 37
+   Cases without factor: 1110
+
+5. infection_endometritis
+   Odds Ratio: 1.75
+   Cases with factor: 10
+   Cases without factor: 1137
+
+6. acute_kidney_injury
+   Odds Ratio: 1.61
+   Cases with factor: 4
+   Cases without factor: 1143
+
+7. hellp_syndrome
+   Odds Ratio: 1.51
+   Cases with factor: 3
+   Cases without factor: 1144
+
+-----------------------------------------------------------------------------
+                        TOP FEATURE IMPORTANCE
+-----------------------------------------------------------------------------
+
+Features contributing most to predictions:
+
+1. nicu_admission: 0.3851
+2. estimated_fetal_weight_by_gm: 0.1078
+3. iugr: 0.0804
+4. birth_weight: 0.0540
+5. low_fetal_weight: 0.0534
+6. ga_weeks: 0.0534
+7. preterm_birth_less_37_weeks: 0.0473
+8. ga_weeks_parsed: 0.0464
+9. preterm: 0.0339
+10. very_preterm: 0.0248
+11. congenital_anomalies: 0.0178
+12. birth_injuries: 0.0102
+13. platelets_x10e9l: 0.0064
+14. bmi: 0.0053
+15. weight: 0.0052
+
+-----------------------------------------------------------------------------
+                              INTERPRETATION
+-----------------------------------------------------------------------------
+
+This model identifies pregnancies at high risk for neonatal complications
+using maternal characteristics, pregnancy complications, and delivery factors.
+
+Clinical Integration:
+• Direct rule-based checks for known high-risk conditions (60-80% risk)
+• ML model predictions for complex multi-factorial cases (moderate risk)
+• Combined approach ensures both evidence-based and data-driven insights
+
+=============================================================================
