@@ -68,5 +68,6 @@ urlpatterns = [
     path('analytics/vbac-comparison/', views.vbac_comparison, name='vbac_comparison'),
     path('analytics/primary-cs-comparison/', views.primary_cs_comparison, name='primary_cs_comparison'),
     path('analytics/instrumental-delivery-trends/', views.instrumental_delivery_trends, name='instrumental_delivery_trends'),
+    path('analytics/robson-classification/', views.robson_classification, name='robson_classification'),
 
 ]

@@ -529,45 +529,119 @@ def cs_indications_counts(request):
     count = Patient.objects.all().count()
     result = [
         {
-            "label": "Non‑progress of labor",
-            "count": Patient.objects.filter(cs_indication__icontains="failure_to_progress").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="failure_to_progress").count() / count) * 100, 2) if count else 0
-        },
-        {
             "label": "Fetal distress",
             "count": Patient.objects.filter(cs_indication__icontains="fetal_distress").count(),
             "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
         },
         {
-            "label": "Transverse/unstable lie",
-            "count": Patient.objects.filter(
-                Q(presentation__icontains="transverse") |
-                Q(presentation__icontains="abnormal_lie_presentation_other_than_breech")
-            ).count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+            "label": "Failure to progress",
+            "count": Patient.objects.filter(cs_indication__icontains="failure_to_progress").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="failure_to_progress").count() / count) * 100, 2) if count else 0
         },
         {
-            "label": "Previous CS",
-            "count": Patient.objects.filter(
-                Q(cs_indication__icontains="repeated_cs_in_labor") |
-                Q(cs_indication__icontains="repeated_cs")
-            ).count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+            "label": "Cord prolapse",
+            "count": Patient.objects.filter(cs_indication__icontains="cord_prolapse").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="cord_prolapse").count() / count) * 100, 2) if count else 0
         },
         {
-            "label": "Placenta previa/bleeding",
+            "label": "Chorioamnionitis",
+            "count": Patient.objects.filter(cs_indication__icontains="chorioamnionitis").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="chorioamnionitis").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Other(Fetal),IUGR",
+            "count": Patient.objects.filter(cs_indication__icontains="other_fetal_iugr").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="other_fetal_iugr").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Breech baby",
+            "count": Patient.objects.filter(cs_indication__icontains="breech_baby").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="breech_baby").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Multiple pregnancy",
+            "count": Patient.objects.filter(cs_indication__icontains="multiple_pregnancy").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="multiple_pregnancy").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Maternal request (no medical reason)",
+            "count": Patient.objects.filter(cs_indication__icontains="maternal_request_no_medical_reason").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="maternal_request_no_medical_reason").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Pre-eclampsia/eclampsia/HELLP",
+            "count": Patient.objects.filter(cs_indication__icontains="pre_eclampsia_eclampsia_hellp").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="pre_eclampsia_eclampsia_hellp").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Maternal medical disease",
+            "count": Patient.objects.filter(cs_indication__icontains="maternal_medical_disease").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="maternal_medical_disease").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Placenta praevia, actively bleeding",
             "count": Patient.objects.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "APH/Intrapartum haemorrhage",
+            "count": Patient.objects.filter(cs_indication__icontains="aph_intrapartum_haemorrhage").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="aph_intrapartum_haemorrhage").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Placental abruption",
             "count": Patient.objects.filter(cs_indication__icontains="placental_abruption").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="placental_abruption").count() / count) * 100, 2) if count else 0
         },
         {
-            "label": "Breech presentation",
+            "label": "Uterine rupture",
+            "count": Patient.objects.filter(cs_indication__icontains="uterine_rupture").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="uterine_rupture").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Other (maternal)",
+            "count": Patient.objects.filter(cs_indication__icontains="other_maternal").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="other_maternal").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Refusal of TOLAC",
+            "count": Patient.objects.filter(cs_indication__icontains="refusal_of_tolac").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="refusal_of_tolac").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Failed TOLAC",
+            "count": Patient.objects.filter(cs_indication__icontains="failed_tolac").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="failed_tolac").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Feto-Pelvic Disproportion",
+            "count": Patient.objects.filter(cs_indication__icontains="feto_pelvic_disproportion").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="feto_pelvic_disproportion").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Abnormal lie/presentation other than breech",
             "count": Patient.objects.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Repeated CS",
+            "count": Patient.objects.filter(cs_indication__icontains="repeated_cs").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="repeated_cs").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Failed IOL",
+            "count": Patient.objects.filter(cs_indication__icontains="failed_iol").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="failed_iol").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Infertility(precious baby)",
+            "count": Patient.objects.filter(cs_indication__icontains="infertility_precious_baby").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="infertility_precious_baby").count() / count) * 100, 2) if count else 0
+        },
+        {
+            "label": "Repeated CS in labor",
+            "count": Patient.objects.filter(cs_indication__icontains="repeated_cs_in_labor").count(),
+            "percentage": round((Patient.objects.filter(cs_indication__icontains="repeated_cs_in_labor").count() / count) * 100, 2) if count else 0
         },
     ]
     return Response(result, status=status.HTTP_200_OK)
@@ -1324,3 +1398,146 @@ def instrumental_delivery_trends(request):
             'total_instrumental': sum(item['instrumental_count'] for item in trend_data)
         }
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def robson_classification(request):
+    """Return Robson classification data for cesarean sections"""
+    from .models import Patient
+    from django.db.models import Count, Q
+    
+    # Get all patients who had cesarean sections
+    cs_patients = Patient.objects.all()
+    total_cs = cs_patients.count()
+    
+    def percent(count, total):
+        return round((count / total) * 100, 2) if total else 0
+    
+    # Define Robson groups with their criteria
+    robson_groups = [
+        {
+            'group': 'Group 1',
+            'label': 'Nulliparous, single cephalic, ≥37 weeks, spontaneous labor',
+            'count': cs_patients.filter(
+                parity=0,
+                fetus_number='single',
+                presentation='cephlic',
+                gestational_age__regex=r'^([3-9][7-9]|[4-9][0-9])',  # ≥37 weeks
+                type_of_labor='spontenous_labor'
+            ).count()
+        },
+        {
+            'group': 'Group 2',
+            'label': 'Nulliparous, single cephalic, ≥37 weeks, induced or CS before labor',
+            'count': cs_patients.filter(
+                parity=0,
+                fetus_number='single',
+                presentation='cephlic',
+                gestational_age__regex=r'^([3-9][7-9]|[4-9][0-9])',  # ≥37 weeks
+                type_of_labor__in=['iol', 'pre_labour_cesarean']
+            ).count()
+        },
+        {
+            'group': 'Group 3',
+            'label': 'Multiparous (excluding previous CS), single cephalic, ≥37 weeks, spontaneous labor',
+            'count': cs_patients.exclude(
+                obstetric_history__in=[
+                    'Multiple c-sections (2)',
+                    'Previous c-section (1)',
+                    'Multiple c-sections (>3)',
+                ]
+            ).filter(
+                parity__gte=1,
+                fetus_number='single',
+                presentation='cephlic',
+                gestational_age__regex=r'^([3-9][7-9]|[4-9][0-9])',  # ≥37 weeks
+                type_of_labor='spontenous_labor',
+                total_number_of_cs='0',  # No previous CS
+            ).count()
+        },
+        {
+            'group': 'Group 4',
+            'label': 'Multiparous (excluding previous CS), single cephalic, ≥37 weeks, induced or CS before labor',
+            'count': cs_patients.exclude(
+                obstetric_history__in=[
+                    'Multiple c-sections (2)',
+                    'Previous c-section (1)',
+                    'Multiple c-sections (>3)',
+                ]
+            ).filter(
+                parity__gte=1,
+                fetus_number='single',
+                presentation='cephlic',
+                gestational_age__regex=r'^([3-9][7-9]|[4-9][0-9])',  # ≥37 weeks
+                type_of_labor__in=['iol', 'pre_labour_cesarean'],
+                total_number_of_cs='0'  # No previous CS
+            ).count()
+        },
+        {
+            'group': 'Group 5',
+            'label': 'Previous CS, single cephalic, ≥37 weeks',
+            'count': cs_patients.filter(
+                fetus_number='single',
+                presentation='cephlic',
+                gestational_age__regex=r'^([3-9][7-9]|[4-9][0-9])',  # ≥37 weeks
+                total_number_of_cs__gte='1',
+                obstetric_history__contains='Previous c-section (1)'
+            ).count()
+        },
+        {
+            'group': 'Group 6',
+            'label': 'All nulliparous breech',
+            'count': cs_patients.filter(
+                parity=0,
+                presentation='preech',
+                fetus_number='single',
+            ).count()
+        },
+        {
+            'group': 'Group 7',
+            'label': 'All multiparous breech (including previous CS)',
+            'count': cs_patients.filter(
+                parity__gte=1,
+                presentation='preech',
+                total_number_of_cs__gte='1',
+                obstetric_history__contains='Previous c-section (1)',
+                fetus_number='single',
+            ).count()
+        },
+        {
+            'group': 'Group 8',
+            'label': 'All multiple pregnancies (including previous CS)',
+            'count': cs_patients.filter(
+                fetus_number__in=['twin', 'triplete']
+            ).count()
+        },
+        {
+            'group': 'Group 9',
+            'label': 'All abnormal lies (including previous CS)',
+            'count': cs_patients.filter(
+                presentation__in=['transverse', 'oblique']
+            ).count()
+        },
+        {
+            'group': 'Group 10',
+            'label': 'All single cephalic, preterm (including previous CS)',
+            'count': cs_patients.filter(
+                fetus_number='single',
+                presentation='cephlic',
+                gestational_age__regex=r'^([0-2][0-9]|[3][0-6])'  # <37 weeks
+            ).count()
+        }
+    ]
+    
+    # Add percentages to each group
+    result = []
+    for group in robson_groups:
+        result.append({
+            'group': group['group'],
+            'label': group['label'],
+            'count': group['count'],
+            'percentage': percent(group['count'], total_cs)
+        })
+    
+    return Response(result, status=status.HTTP_200_OK)
