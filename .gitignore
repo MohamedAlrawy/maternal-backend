@@ -4,9 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -22,50 +19,52 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Django
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-/media
-/staticfiles
+/staticfiles/
+/media/
+/logs/
 
-# Environment
+# Environment variables
 .env
 .env.local
-.env.*.local
+.env.production
+.env.staging
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-Thumbs.db
 
 # Testing
+.pytest_cache/
 .coverage
 htmlcov/
-.pytest_cache/
 .tox/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Security and Build
+build_secure/
+*.tar.gz
+*.zip
+db_backups/
+nginx_ssl/
+certbot_webroot/
+nginx_cache/
 
-# pyenv
-.python-version
+# Docker
+docker-compose.override.yml
 
-# Backup files
-*.bak
-*.sql
-*.dump
-
-# Excel files (keep artifacts)
-*.xlsx
-*.xls
-*.~lock.*
-
+# Secrets
+token
+*.pem
+*.key
+*.crt
+secrets/

@@ -69,5 +69,8 @@ urlpatterns = [
     path('analytics/primary-cs-comparison/', views.primary_cs_comparison, name='primary_cs_comparison'),
     path('analytics/instrumental-delivery-trends/', views.instrumental_delivery_trends, name='instrumental_delivery_trends'),
     path('analytics/robson-classification/', views.robson_classification, name='robson_classification'),
+    path('users/', views.UserListCreateView.as_view(), name='user-list-create'),
+    path('users/<int:pk>/approve/', views.ApproveUserView.as_view(), name='user-approve'),
+
 
 ]

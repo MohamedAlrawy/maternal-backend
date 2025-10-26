@@ -1,6 +1,6 @@
 from rest_framework import generics, status, filters
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -1541,3 +1541,33 @@ def robson_classification(request):
         })
     
     return Response(result, status=status.HTTP_200_OK)
+
+
+class UserListCreateView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'post':
+            return UserRegistrationSerializer
+        return UserSerializer
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        user.is_active = False  # New users are inactive by default
+        user.save()
+
+from rest_framework.decorators import action
+from rest_framework.views import APIView
+
+class ApproveUserView(APIView):
+    permission_classes = [IsAuthenticated]
+    def patch(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found"}, status=404)
+        user.is_active = True
+        user.save()
+        return Response(UserSerializer(user).data)

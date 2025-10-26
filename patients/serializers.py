@@ -6,8 +6,8 @@ from .models import User, Patient, ProgressNote, Alert, Baby
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone_number', 'date_joined']
-        read_only_fields = ['id', 'date_joined']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'phone_number', 'date_joined', 'is_active']
+        read_only_fields = ['id', 'date_joined', 'is_active']
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -25,7 +25,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        validated_data['username'] = validated_data['email']
         user = User.objects.create_user(**validated_data)
+        user.is_active = False
+        user.save()
         return user
 
 
