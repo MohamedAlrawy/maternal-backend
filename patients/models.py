@@ -10,6 +10,7 @@ class User(AbstractUser):
         ('doctor', 'Doctor'),
         ('patient', 'Patient'),
         ('team_leader', 'Team Leader'),
+        ('nurse', 'Nurse'),
     ]
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='patient')
@@ -173,7 +174,7 @@ class Patient(models.Model):
     # Delivery details
     PRESENTATION_CHOICES = [
         ('cephlic', 'Cephalic'),
-        ('preech', 'Breech'),
+        ('breech', 'Breech'),
         ('transverse', 'Transverse'),
         ('oblique', 'Oblique'),
     ]
@@ -360,6 +361,10 @@ class Patient(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_patients')
+    
+    is_discharged = models.BooleanField(default=False)
+    discharged_at = models.DateTimeField(null=True, blank=True)
+    is_moved_to_cs = models.BooleanField(default=False)
     
     class Meta:
         ordering = ['-created_at']

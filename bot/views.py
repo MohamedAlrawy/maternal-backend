@@ -18,7 +18,8 @@ class ChatAPIView(APIView):
     def post(self, request):
         user_message = request.data.get("message", "").strip()
         session_uuid = request.data.get("session_id")  # optional: passed from frontend
-        
+        print(session_uuid)
+        print(user_message)
         if not user_message:
             return Response({"error": "message required"}, status=status.HTTP_400_BAD_REQUEST)
 

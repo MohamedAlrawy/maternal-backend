@@ -56,6 +56,19 @@ class PatientDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        was_discharged = instance.is_discharged
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        is_discharged_now = serializer.validated_data.get('is_discharged', was_discharged)
+        if is_discharged_now and not was_discharged:
+            serializer.save(discharged_at=timezone.now())
+        else:
+            serializer.save()
+        return Response(serializer.data)
+
 
 class LaborDeliveryPatientsView(generics.ListAPIView):
     """Get patients in labor and delivery"""
@@ -952,63 +965,89 @@ def fetal_neonatal_outcomes(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def vbac_success_rate(request):
-    """Return monthly VBAC success rates"""
+    '''Return monthly rate (%) of patients with VBAC and Previous c-section (1) in obstetric history who were shifted to CS, out of all with VBAC and Previous c-section (1) in obstetric history.'''
     from .models import Patient
     from django.db.models import Count
     from django.db.models.functions import TruncMonth
-    
-    # Get VBAC data grouped by month
-    vbac_data = (
-        Patient.objects
-        .filter(vbac=True)
-        .annotate(month=TruncMonth('time_of_admission'))
-        .values('month')
-        .annotate(count=Count('id'))
-        .order_by('month')
+
+    # Denominator: All patients with vbac=True and "Previous c-section (1)" in obstetric_history
+    denominator_qs = Patient.objects.filter(vbac=True, obstetric_history__contains=["Previous c-section (1)"])
+    denominator_count = denominator_qs.count()
+
+    # Numerator: Subset of denominator with is_moved_to_cs=True, grouped by month
+    numerator_monthly = (
+        denominator_qs.filter(is_moved_to_cs=True)
+            .annotate(month=TruncMonth('time_of_admission'))
+            .values('month')
+            .annotate(numerator=Count('id'))
+            .order_by('month')
     )
-    
-    # Format data for chart
+
     result = []
-    for item in vbac_data:
-        if item['month']:
+    for entry in numerator_monthly:
+        if entry['month']:
             result.append({
-                'month': item['month'].strftime('%Y-%m'),
-                'month_label': item['month'].strftime('%B %Y'),
-                'count': item['count']
+                'month': entry['month'].strftime('%Y-%m'),
+                'month_label': entry['month'].strftime('%B %Y'),
+                'numerator': entry['numerator'],
+                'denominator': denominator_count,
+                'rate': round((entry['numerator'] / denominator_count * 100) if denominator_count else 0, 2)
             })
-    
+
     return Response(result, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def vbac_trends(request):
-    """Return monthly VBAC trends for patients with vbac=True and total_number_of_cs=1"""
+    """
+    Monthly VBAC 'success rate':
+    numerator: vbac=True & previous cs1
+    denominator: (vbac=True OR is_moved_to_cs=True) & previous cs1
+    All grouped per month of time_of_admission.
+    """
     from .models import Patient
-    from django.db.models import Count
+    from django.db.models import Count, Q
     from django.db.models.functions import TruncMonth
-    
-    # Get VBAC trends data grouped by month
-    # Filter for patients with vbac=True and total_number_of_cs='1'
-    vbac_trends_data = (
-        Patient.objects
-        .filter(vbac=True, total_number_of_cs='1')
+
+    # Base queryset: all with previous CS1 in history
+    base_qs = Patient.objects.filter(obstetric_history__contains=["Previous c-section (1)"])
+
+    # Numerator monthly: vbac=True
+    numerator_monthly = (
+        base_qs.filter(vbac=True)
         .annotate(month=TruncMonth('time_of_admission'))
         .values('month')
-        .annotate(count=Count('id'))
+        .annotate(numerator=Count('id'))
         .order_by('month')
     )
-    
-    # Format data for chart
+
+    # Denominator monthly: vbac=True OR is_moved_to_cs=True
+    denominator_monthly = (
+        base_qs.filter(Q(vbac=True) | Q(is_moved_to_cs=True))
+        .annotate(month=TruncMonth('time_of_admission'))
+        .values('month')
+        .annotate(denominator=Count('id'))
+        .order_by('month')
+    )
+
+    numerator_map = {entry['month']: entry['numerator'] for entry in numerator_monthly}
+    denominator_map = {entry['month']: entry['denominator'] for entry in denominator_monthly}
+    all_months = set(numerator_map) | set(denominator_map)
+
     result = []
-    for item in vbac_trends_data:
-        if item['month']:
-            result.append({
-                'month': item['month'].strftime('%Y-%m'),
-                'month_label': item['month'].strftime('%B %Y'),
-                'vbac_count': item['count']
-            })
-    
+    for month in sorted(all_months):
+        num = numerator_map.get(month, 0)
+        denom = denominator_map.get(month, 0)
+        percent = round(num / denom * 100, 2) if denom else 0
+        result.append({
+            'month': month.strftime('%Y-%m') if month else None,
+            'month_label': month.strftime('%B %Y') if month else None,
+            'numerator': num,
+            'denominator': denom,
+            'rate': percent,
+        })
+
     return Response(result, status=status.HTTP_200_OK)
 
 

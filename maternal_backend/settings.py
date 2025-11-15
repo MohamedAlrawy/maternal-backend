@@ -28,6 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here'
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='aaa')
 
 
 # Application definition
@@ -189,3 +190,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# =============================================================================
+# PRODUCTION SECURITY SETTINGS
+# Import production-specific configurations when running in production
+# =============================================================================
+
+DJANGO_ENV = config('DJANGO_ENV', default='production')
+
+if DJANGO_ENV == 'production':
+    # Import production security settings
+    try:
+        from .settings_prod import *
+        print("✓ Production security settings loaded")
+    except ImportError as e:
+        print(f"⚠ Warning: Could not load production settings: {e}")
+
+# Health check endpoint
+HEALTH_CHECK_URL = '/api/health/'
