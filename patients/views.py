@@ -1325,7 +1325,7 @@ def primary_cs_comparison(request):
             if i == 0:
                 label = 'Primary CS'
             else:
-                label = f'CS #{i + 1}'
+                label = f'CS #{i}'
             
             cs_counts.append({
                 'label': label,
