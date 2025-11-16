@@ -98,7 +98,8 @@ class PatientSerializer(serializers.ModelSerializer):
             
             'created_at', 'updated_at', 'created_by_name',
             # Added related babies
-            'babies', 'estimated_fetal_weight_by_gm', 'is_discharged', 'discharged_at', 'is_moved_to_cs'
+            'babies', 'estimated_fetal_weight_by_gm', 'is_discharged', 'discharged_at', 'is_moved_to_cs',
+            'assigned_doctor'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'bmi']
     

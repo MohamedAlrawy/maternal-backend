@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth import get_user_model
 
 from .models import User, Patient, ProgressNote, Alert
 from .serializers import (
@@ -536,126 +537,163 @@ def nationality_map(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def cs_indications_counts(request):
-    """Return counts for CS indications for analytics bar chart"""
+    """Return counts for CS indications for analytics bar chart, filtered by total_number_of_cs if provided"""
     from .models import Patient
     from django.db.models import Q
-    count = Patient.objects.all().count()
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+    qs = Patient.objects.all()
+    if total_number_of_cs is not None:
+        qs = qs.filter(total_number_of_cs=str(total_number_of_cs))
+    count = qs.count()
     result = [
         {
             "label": "Fetal distress",
-            "count": Patient.objects.filter(cs_indication__icontains="fetal_distress").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="fetal_distress").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="fetal_distress").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Failure to progress",
-            "count": Patient.objects.filter(cs_indication__icontains="failure_to_progress").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="failure_to_progress").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="failure_to_progress").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="failure_to_progress").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Cord prolapse",
-            "count": Patient.objects.filter(cs_indication__icontains="cord_prolapse").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="cord_prolapse").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="cord_prolapse").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="cord_prolapse").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Chorioamnionitis",
-            "count": Patient.objects.filter(cs_indication__icontains="chorioamnionitis").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="chorioamnionitis").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="chorioamnionitis").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="chorioamnionitis").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Other(Fetal),IUGR",
-            "count": Patient.objects.filter(cs_indication__icontains="other_fetal_iugr").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="other_fetal_iugr").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="other_fetal_iugr").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="other_fetal_iugr").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Breech baby",
-            "count": Patient.objects.filter(cs_indication__icontains="breech_baby").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="breech_baby").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="breech_baby").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="breech_baby").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Multiple pregnancy",
-            "count": Patient.objects.filter(cs_indication__icontains="multiple_pregnancy").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="multiple_pregnancy").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="multiple_pregnancy").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="multiple_pregnancy").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Maternal request (no medical reason)",
-            "count": Patient.objects.filter(cs_indication__icontains="maternal_request_no_medical_reason").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="maternal_request_no_medical_reason").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="maternal_request_no_medical_reason").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="maternal_request_no_medical_reason").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Pre-eclampsia/eclampsia/HELLP",
-            "count": Patient.objects.filter(cs_indication__icontains="pre_eclampsia_eclampsia_hellp").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="pre_eclampsia_eclampsia_hellp").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="pre_eclampsia_eclampsia_hellp").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="pre_eclampsia_eclampsia_hellp").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Maternal medical disease",
-            "count": Patient.objects.filter(cs_indication__icontains="maternal_medical_disease").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="maternal_medical_disease").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="maternal_medical_disease").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="maternal_medical_disease").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Placenta praevia, actively bleeding",
-            "count": Patient.objects.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="placenta_praevia_actively_bleeding").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "APH/Intrapartum haemorrhage",
-            "count": Patient.objects.filter(cs_indication__icontains="aph_intrapartum_haemorrhage").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="aph_intrapartum_haemorrhage").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="aph_intrapartum_haemorrhage").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="aph_intrapartum_haemorrhage").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Placental abruption",
-            "count": Patient.objects.filter(cs_indication__icontains="placental_abruption").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="placental_abruption").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="placental_abruption").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="placental_abruption").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Uterine rupture",
-            "count": Patient.objects.filter(cs_indication__icontains="uterine_rupture").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="uterine_rupture").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="uterine_rupture").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="uterine_rupture").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Other (maternal)",
-            "count": Patient.objects.filter(cs_indication__icontains="other_maternal").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="other_maternal").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="other_maternal").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="other_maternal").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Refusal of TOLAC",
-            "count": Patient.objects.filter(cs_indication__icontains="refusal_of_tolac").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="refusal_of_tolac").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="refusal_of_tolac").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="refusal_of_tolac").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Failed TOLAC",
-            "count": Patient.objects.filter(cs_indication__icontains="failed_tolac").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="failed_tolac").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="failed_tolac").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="failed_tolac").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Feto-Pelvic Disproportion",
-            "count": Patient.objects.filter(cs_indication__icontains="feto_pelvic_disproportion").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="feto_pelvic_disproportion").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="feto_pelvic_disproportion").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="feto_pelvic_disproportion").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Abnormal lie/presentation other than breech",
-            "count": Patient.objects.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="abnormal_lie_presentation_other_than_breech").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Repeated CS",
-            "count": Patient.objects.filter(cs_indication__icontains="repeated_cs").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="repeated_cs").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="repeated_cs").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="repeated_cs").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Failed IOL",
-            "count": Patient.objects.filter(cs_indication__icontains="failed_iol").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="failed_iol").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="failed_iol").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="failed_iol").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Infertility(precious baby)",
-            "count": Patient.objects.filter(cs_indication__icontains="infertility_precious_baby").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="infertility_precious_baby").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="infertility_precious_baby").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="infertility_precious_baby").count() / count) * 100, 2) if count else 0
         },
         {
             "label": "Repeated CS in labor",
-            "count": Patient.objects.filter(cs_indication__icontains="repeated_cs_in_labor").count(),
-            "percentage": round((Patient.objects.filter(cs_indication__icontains="repeated_cs_in_labor").count() / count) * 100, 2) if count else 0
+            "count": qs.filter(cs_indication__icontains="repeated_cs_in_labor").count(),
+            "percentage": round((qs.filter(cs_indication__icontains="repeated_cs_in_labor").count() / count) * 100, 2) if count else 0
         },
+    ]
+    return Response(result, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cs_type_counts(request):
+    """Return counts for Emergency vs Elective C-sections, filtered by total_number_of_cs if provided."""
+    from .models import Patient
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+    qs = Patient.objects.filter(mode_of_delivery__iexact='cs')
+    if total_number_of_cs is not None:
+        qs = qs.filter(total_number_of_cs=str(total_number_of_cs))
+    total_cs = qs.count()
+    emergency_cs = qs.filter(type_of_cs__iexact='emergency').count()
+    elective_cs = qs.filter(type_of_cs__iexact='elective').count()
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    result = [
+        {
+            'label': 'Emergency CS',
+            'count': emergency_cs,
+            'percentage': percent(emergency_cs, total_cs),
+        },
+        {
+            'label': 'Elective CS',
+            'count': elective_cs,
+            'percentage': percent(elective_cs, total_cs),
+        },
+        {
+            'label': 'All CS',
+            'count': total_cs,
+            'percentage': 100,
+        }
     ]
     return Response(result, status=status.HTTP_200_OK)
 
@@ -1080,38 +1118,6 @@ def primary_cs_rate(request):
                 'count': item['count']
             })
     
-    return Response(result, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def cs_type_counts(request):
-    """Return counts for Emergency vs Elective C-sections."""
-    from .models import Patient
-    total_cs = Patient.objects.filter(mode_of_delivery__iexact='cs').count()
-    emergency_cs = Patient.objects.filter(mode_of_delivery__iexact='cs', type_of_cs__iexact='emergency').count()
-    elective_cs = Patient.objects.filter(mode_of_delivery__iexact='cs', type_of_cs__iexact='elective').count()
-
-    def percent(part, total):
-        return round((part / total) * 100, 2) if total else 0
-
-    result = [
-        {
-            'label': 'Emergency CS',
-            'count': emergency_cs,
-            'percentage': percent(emergency_cs, total_cs),
-        },
-        {
-            'label': 'Elective CS',
-            'count': elective_cs,
-            'percentage': percent(elective_cs, total_cs),
-        },
-        {
-            'label': 'All CS',
-            'count': total_cs,
-            'percentage': 100,
-        }
-    ]
     return Response(result, status=status.HTTP_200_OK)
 
 
@@ -1610,3 +1616,42 @@ class ApproveUserView(APIView):
         user.is_active = True
         user.save()
         return Response(UserSerializer(user).data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def doctor_list(request):
+    User = get_user_model()
+    doctors = User.objects.filter(role='doctor')
+    data = []
+    for doctor in doctors:
+        cs_count = Patient.objects.filter(assigned_doctor=doctor, mode_of_delivery='cs').count()
+        nvd_count = Patient.objects.filter(assigned_doctor=doctor, mode_of_delivery='nvd').count()
+        data.append({
+            'id': doctor.id,
+            'first_name': doctor.first_name,
+            'last_name': doctor.last_name,
+            'email': doctor.email,
+            'phone_number': getattr(doctor, 'phone_number', None),
+            'cs_count': cs_count,
+            'nvd_count': nvd_count,
+        })
+    return Response(data)
+# Register this as path('api/doctors/', doctor_list) in urls.py
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_doctor_users(request):
+    User = get_user_model()
+    doctors = User.objects.filter(role='doctor')
+    data = [
+        {
+            'id': d.id,
+            'first_name': d.first_name,
+            'last_name': d.last_name,
+            'email': d.email,
+            'phone_number': getattr(d, 'phone_number', None),
+        }
+        for d in doctors
+    ]
+    return Response(data)
+# Register this as path('api/doctor-users/', list_doctor_users) in urls.py

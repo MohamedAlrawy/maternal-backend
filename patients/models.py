@@ -110,6 +110,9 @@ class Patient(models.Model):
     
     # Delivery-specific fields
     time_of_admission = models.DateTimeField(blank=True, null=True, help_text="Time of admission to hospital")
+    assigned_doctor = models.ForeignKey(
+        User, blank=True, null=True, on_delete=models.SET_NULL, related_name="patients", help_text="Assigned doctor for patient"
+    )
     cervical_dilatation_at_admission = models.FloatField(blank=True, null=True, help_text="Cervical dilatation at admission in cm")
     time_of_cervix_fully_dilated = models.DateTimeField(blank=True, null=True, help_text="Time when cervix became fully dilated")
     time_of_delivery = models.DateTimeField(blank=True, null=True, help_text="Time of delivery")

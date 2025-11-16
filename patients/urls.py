@@ -10,6 +10,7 @@ from .pph.pph_views import (
 from .cs.cs_views import (
     predict_cs_api_view,
 )
+from .views import doctor_list, list_doctor_users
 
 urlpatterns = [
     # Authentication
@@ -73,4 +74,9 @@ urlpatterns = [
     path('users/<int:pk>/approve/', views.ApproveUserView.as_view(), name='user-approve'),
 
 
+]
+
+urlpatterns += [
+    path('doctors/', doctor_list),
+    path('doctor-users/', list_doctor_users),
 ]
