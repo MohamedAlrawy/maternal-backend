@@ -8,6 +8,7 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
 import django_filters
+import re
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 
@@ -327,19 +328,33 @@ class PredictNeonatalView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def general_indicators(request):
-    """General indicators for analytics dashboard"""
-    total_patients = Patient.objects.count()
-    saudi_nationals = Patient.objects.filter(nationality__iexact="saudi arabia").count()
-    non_saudi_nationals = Patient.objects.exclude(nationality__iexact="saudi arabia").count()
-    advanced_maternal = Patient.objects.filter(age__gte=35).count()
-    obesity_prevalence = Patient.objects.filter(bmi__gte=30).count()
-    primigravida = Patient.objects.filter(parity=0).count()
-    multipara = Patient.objects.filter(parity__gte=1).count()
-    booked_cases = Patient.objects.exclude(booking="unbooked").count()
-
+    """General indicators for analytics dashboard with optional date range filtering by time_of_admission."""
+    from datetime import datetime
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
+    patients = Patient.objects.all()
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            patients = patients.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+            patients = patients.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    total_patients = patients.count()
+    saudi_nationals = patients.filter(nationality__iexact="saudi arabia").count()
+    non_saudi_nationals = patients.exclude(nationality__iexact="saudi arabia").count()
+    advanced_maternal = patients.filter(age__gte=35).count()
+    obesity_prevalence = patients.filter(bmi__gte=30).count()
+    primigravida = patients.filter(parity=0).count()
+    multipara = patients.filter(parity__gte=1).count()
+    booked_cases = patients.exclude(booking="unbooked").count()
     def percent(part, total):
         return round((part / total) * 100, 2) if total else 0
-
     data = {
         "total_deliveries": total_patients,
         "saudi_nationals": {"count": saudi_nationals, "percent": percent(saudi_nationals, total_patients)},
@@ -356,45 +371,40 @@ def general_indicators(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def booking_status(request):
-    """Get booking status distribution for pie chart"""
-    total_patients = Patient.objects.count()
-    
-    # Count each booking status
-    first_trimester = Patient.objects.filter(booking="first_trimester").count()
-    second_trimester = Patient.objects.filter(booking="second_trimester").count()
-    third_trimester = Patient.objects.filter(booking="third_trimester").count()
-    unbooked = Patient.objects.filter(booking="unbooked").count()
-    
+    """Get booking status distribution for pie chart with optional date range filtering by time_of_admission."""
+    from datetime import datetime
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
+    patients = Patient.objects.all()
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            patients = patients.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+            patients = patients.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    total_patients = patients.count()
+    first_trimester = patients.filter(booking="first_trimester").count()
+    second_trimester = patients.filter(booking="second_trimester").count()
+    third_trimester = patients.filter(booking="third_trimester").count()
+    unbooked = patients.filter(booking="unbooked").count()
     def percent(part, total):
         return round((part / total) * 100, 2) if total else 0
-    
     data = {
         "total_patients": total_patients,
         "booking_data": [
-            {
-                "name": "First Trimester",
-                "value": first_trimester,
-                "percent": percent(first_trimester, total_patients)
-            },
-            {
-                "name": "Second Trimester",
-                "value": second_trimester,
-                "percent": percent(second_trimester, total_patients)
-            },
-            {
-                "name": "Third Trimester",
-                "value": third_trimester,
-                "percent": percent(third_trimester, total_patients)
-            },
-            {
-                "name": "Unbooked",
-                "value": unbooked,
-                "percent": percent(unbooked, total_patients)
-            }
+            {"name": "First Trimester", "value": first_trimester, "percent": percent(first_trimester, total_patients)},
+            {"name": "Second Trimester", "value": second_trimester, "percent": percent(second_trimester, total_patients)},
+            {"name": "Third Trimester", "value": third_trimester, "percent": percent(third_trimester, total_patients)},
+            {"name": "Unbooked", "value": unbooked, "percent": percent(unbooked, total_patients)},
         ]
     }
-    
-    return Response(data, status=status.HTTP_200_OK)
+    return Response(data)
 
 
 @api_view(['GET'])
@@ -537,11 +547,41 @@ def nationality_map(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def cs_indications_counts(request):
-    """Return counts for CS indications for analytics bar chart, filtered by total_number_of_cs if provided"""
+    """Return counts for CS indications for analytics bar chart.
+    Supports filters: start_date, end_date, assigned_doctor, total_number_of_cs
+    """
     from .models import Patient
     from django.db.models import Q
-    total_number_of_cs = request.GET.get('total_number_of_cs')
+    from datetime import datetime
+    
     qs = Patient.objects.all()
+    
+    # Apply filters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+
+    if assigned_doctor:
+        try:
+            qs = qs.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+
     if total_number_of_cs is not None:
         qs = qs.filter(total_number_of_cs=str(total_number_of_cs))
     count = qs.count()
@@ -667,10 +707,40 @@ def cs_indications_counts(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def cs_type_counts(request):
-    """Return counts for Emergency vs Elective C-sections, filtered by total_number_of_cs if provided."""
+    """Return counts for Emergency vs Elective C-sections.
+    Supports filters: start_date, end_date, assigned_doctor, total_number_of_cs
+    """
     from .models import Patient
-    total_number_of_cs = request.GET.get('total_number_of_cs')
+    from datetime import datetime
+    
     qs = Patient.objects.filter(mode_of_delivery__iexact='cs')
+    
+    # Apply filters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+
+    if assigned_doctor:
+        try:
+            qs = qs.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+
     if total_number_of_cs is not None:
         qs = qs.filter(total_number_of_cs=str(total_number_of_cs))
     total_cs = qs.count()
@@ -1043,13 +1113,44 @@ def vbac_trends(request):
     numerator: vbac=True & previous cs1
     denominator: (vbac=True OR is_moved_to_cs=True) & previous cs1
     All grouped per month of time_of_admission.
+    Supports filters: start_date, end_date, assigned_doctor, total_number_of_cs
     """
     from .models import Patient
     from django.db.models import Count, Q
     from django.db.models.functions import TruncMonth
+    from datetime import datetime
 
     # Base queryset: all with previous CS1 in history
     base_qs = Patient.objects.filter(obstetric_history__contains=["Previous c-section (1)"])
+
+    # Apply filters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            base_qs = base_qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            base_qs = base_qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+
+    if assigned_doctor:
+        try:
+            base_qs = base_qs.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+
+    if total_number_of_cs is not None:
+        base_qs = base_qs.filter(total_number_of_cs=str(total_number_of_cs))
 
     # Numerator monthly: vbac=True
     numerator_monthly = (
@@ -1306,20 +1407,51 @@ def primary_cs_comparison(request):
     """
     Get CS counts by total_number_of_cs (0-9) where mode_of_delivery='cs'.
     0 is labeled as 'Primary CS', others as 'CS #2', 'CS #3', etc.
+    Supports filters: start_date, end_date, assigned_doctor, total_number_of_cs
     """
     from .models import Patient
     from django.db.models import Count
+    from datetime import datetime
+    
+    # Base queryset for CS patients
+    qs = Patient.objects.filter(mode_of_delivery='cs')
+
+    # Apply filters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+
+    if assigned_doctor:
+        try:
+            qs = qs.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+
+    if total_number_of_cs is not None:
+        qs = qs.filter(total_number_of_cs=str(total_number_of_cs))
     
     # Total CS patients
-    total_cs = Patient.objects.filter(mode_of_delivery='cs').count()
+    total_cs = qs.count()
     
     # Get counts for each total_number_of_cs from 0 to 9
     cs_counts = []
     for i in range(10):  # 0 to 9
-        count = Patient.objects.filter(
-            total_number_of_cs=str(i),
-            mode_of_delivery='cs'
-        ).count()
+        count = qs.filter(total_number_of_cs=str(i)).count()
         
         if count > 0:  # Only include if there are patients
             if i == 0:
@@ -1448,12 +1580,45 @@ def instrumental_delivery_trends(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def robson_classification(request):
-    """Return Robson classification data for cesarean sections"""
+    """Return Robson classification data for cesarean sections.
+    Supports filters: start_date, end_date, assigned_doctor, total_number_of_cs
+    """
     from .models import Patient
     from django.db.models import Count, Q
+    from datetime import datetime
     
-    # Get all patients who had cesarean sections
-    cs_patients = Patient.objects.all()
+    # Base queryset for CS patients
+    cs_patients = Patient.objects.filter(mode_of_delivery='cs')
+    
+    # Apply filters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
+
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            cs_patients = cs_patients.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            cs_patients = cs_patients.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+
+    if assigned_doctor:
+        try:
+            cs_patients = cs_patients.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+
+    if total_number_of_cs is not None:
+        cs_patients = cs_patients.filter(total_number_of_cs=str(total_number_of_cs))
+    
     total_cs = cs_patients.count()
     
     def percent(count, total):
@@ -1654,4 +1819,409 @@ def list_doctor_users(request):
         for d in doctors
     ]
     return Response(data)
-# Register this as path('api/doctor-users/', list_doctor_users) in urls.py
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def perineum_integrity_stats(request):
+    """
+    Get perineum integrity statistics filtered by date range.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    """
+    from .models import Patient
+    from django.db.models import Count
+    from datetime import datetime
+    
+    # Base queryset - only patients with perineum_integrity data
+    qs = Patient.objects.filter(perineum_integrity__isnull=False)
+    
+    # Apply date filtering if provided
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    # Get counts for each perineum integrity type
+    integrity_counts = (
+        qs.values('perineum_integrity')
+        .annotate(count=Count('id'))
+        .order_by('perineum_integrity')
+    )
+    
+    # Map of choices to display labels
+    choice_labels = {
+        'intact': 'Intact',
+        'episotomy': 'Episotomy',
+        '1st_2nd_tear': '1st/2nd Tear',
+        '3rd_4th_tear': '3rd/4th Tear',
+        'episotomy_3rd_4th': 'Episotomy + 3rd/4th',
+    }
+    
+    total = qs.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # Build response data
+    data = []
+    for item in integrity_counts:
+        integrity_type = item['perineum_integrity']
+        count = item['count']
+        label = choice_labels.get(integrity_type, integrity_type)
+        
+        data.append({
+            'label': label,
+            'value': count,
+            'percentage': percent(count, total),
+            'type': integrity_type
+        })
+    
+    result = {
+        'perineum_integrity_data': data,
+        'total_patients': total
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def birth_weight_stats(request):
+    """
+    Get birth weight statistics from Baby model, filtered by date range and mode of delivery.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    - mode_of_delivery: 'nvd' or 'cs' (optional)
+    """
+    from .models import Patient, Baby
+    from django.db.models import Count, Q
+    from datetime import datetime
+    
+    # Base queryset for babies with birth weight
+    qs = Patient.objects.filter(birth_weight__isnull=False)
+    
+    # Apply date filtering if provided
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    mode_of_delivery = request.GET.get('mode_of_delivery')
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    if mode_of_delivery in ['nvd', 'cs']:
+        qs = qs.filter(mode_of_delivery=mode_of_delivery)
+    
+    # Define weight ranges (in grams)
+    weight_ranges = [
+        {'min': 0, 'max': 999, 'label': '<1000g'},
+        {'min': 1000, 'max': 1499, 'label': '1000-1499g'},
+        {'min': 1500, 'max': 2499, 'label': '1500-2499g'},
+        {'min': 2500, 'max': 3999, 'label': '2500-3999g'},
+        {'min': 4000, 'max': 999999, 'label': '≥4000g'},
+    ]
+    
+    total = qs.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # Build response data
+    data = []
+    for range_def in weight_ranges:
+        count = qs.filter(
+            birth_weight__gte=range_def['min'],
+            birth_weight__lte=range_def['max']
+        ).count()
+        
+        if count > 0:  # Only include ranges with data
+            data.append({
+                'label': range_def['label'],
+                'count': count,
+                'percentage': percent(count, total)
+            })
+    
+    result = {
+        'birth_weight_data': data,
+        'total_babies': total
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def gestational_age_stats(request):
+    """
+    Get gestational age statistics from Patient model, filtered by date range and mode of delivery.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    - mode_of_delivery: 'nvd' or 'cs' (optional)
+    """
+    from .models import Patient
+    from django.db.models import Count, Q
+    from datetime import datetime
+    import re
+    
+    # Base queryset
+    qs = Patient.objects.filter(gestational_age__isnull=False).exclude(gestational_age='')
+    
+    # Apply date filtering if provided
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    mode_of_delivery = request.GET.get('mode_of_delivery')
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    if mode_of_delivery in ['nvd', 'cs']:
+        qs = qs.filter(mode_of_delivery=mode_of_delivery)
+    
+    # Define gestational age ranges
+    age_ranges = [
+        {'min': 0, 'max': 27, 'label': '<28 weeks'},
+        {'min': 28, 'max': 31, 'label': '28-31 weeks'},
+        {'min': 32, 'max': 36, 'label': '32-36 weeks'},
+        {'min': 37, 'max': 40, 'label': '37-40 weeks'},
+        {'min': 41, 'max': 999, 'label': '≥41 weeks'},
+    ]
+    
+    total = qs.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # Parse gestational age and categorize
+    data = []
+    for range_def in age_ranges:
+        count = 0
+        for patient in qs:
+            weeks = None
+            ga_str = str(patient.gestational_age).lower().strip()
+            
+            # First try to match pattern with "weeks" (e.g., "38 weeks 2 days" -> 38)
+            match = re.search(r'(\d+)\s*weeks?', ga_str)
+            if match:
+                weeks = int(match.group(1))
+            else:
+                # If no "weeks" found, try to extract just a number (e.g., "38" or "38.5" -> 38)
+                # Match the first number in the string
+                number_match = re.search(r'(\d+(?:\.\d+)?)', ga_str)
+                if number_match:
+                    weeks = int(float(number_match.group(1)))
+            
+            # Categorize if we successfully extracted weeks
+            if weeks is not None and range_def['min'] <= weeks <= range_def['max']:
+                count += 1
+        
+        if count > 0:  # Only include ranges with data
+            data.append({
+                'label': range_def['label'],
+                'count': count,
+                'percentage': percent(count, total)
+            })
+    
+    result = {
+        'gestational_age_data': data,
+        'total_patients': total
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def presentation_stats(request):
+    """
+    Get presentation statistics from Patient model, filtered by date range and mode of delivery.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    - mode_of_delivery: 'nvd' or 'cs' (optional)
+    """
+    from .models import Patient
+    from django.db.models import Count
+    from datetime import datetime
+    
+    # Base queryset
+    qs = Patient.objects.filter(presentation__isnull=False)
+    
+    # Apply date filtering if provided
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    mode_of_delivery = request.GET.get('mode_of_delivery')
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    if mode_of_delivery in ['nvd', 'cs']:
+        qs = qs.filter(mode_of_delivery=mode_of_delivery)
+    
+    # Get counts for each presentation type
+    presentation_counts = (
+        qs.values('presentation')
+        .annotate(count=Count('id'))
+        .order_by('presentation')
+    )
+    
+    # Map of choices to display labels
+    choice_labels = {
+        'cephlic': 'Cephalic',
+        'breech': 'Breech',
+        'transverse': 'Transverse',
+        'oblique': 'Oblique',
+    }
+    
+    total = qs.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # Build response data
+    data = []
+    for item in presentation_counts:
+        presentation_type = item['presentation']
+        count = item['count']
+        label = choice_labels.get(presentation_type, presentation_type)
+        
+        data.append({
+            'label': label,
+            'value': count,
+            'percentage': percent(count, total),
+            'type': presentation_type
+        })
+    
+    result = {
+        'presentation_data': data,
+        'total_patients': total
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetus_number_stats(request):
+    """
+    Get fetus number statistics from Patient model, filtered by date range and mode of delivery.
+    Query params:
+    - start_date: YYYY-MM-DD (optional)
+    - end_date: YYYY-MM-DD (optional)
+    - mode_of_delivery: 'nvd' or 'cs' (optional)
+    """
+    from .models import Patient
+    from django.db.models import Count
+    from datetime import datetime
+    
+    # Base queryset
+    qs = Patient.objects.filter(fetus_number__isnull=False)
+    
+    # Apply date filtering if provided
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    mode_of_delivery = request.GET.get('mode_of_delivery')
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
+    if mode_of_delivery in ['nvd', 'cs']:
+        qs = qs.filter(mode_of_delivery=mode_of_delivery)
+    
+    # Get counts for each fetus number type
+    fetus_counts = (
+        qs.values('fetus_number')
+        .annotate(count=Count('id'))
+        .order_by('fetus_number')
+    )
+    
+    # Map of choices to display labels
+    choice_labels = {
+        'single': 'Single',
+        'twin': 'Twin',
+        'triplete': 'Triplet',
+    }
+    
+    total = qs.count()
+    
+    def percent(part, total):
+        return round((part / total) * 100, 2) if total else 0
+    
+    # Build response data
+    data = []
+    for item in fetus_counts:
+        fetus_type = item['fetus_number']
+        count = item['count']
+        label = choice_labels.get(fetus_type, fetus_type)
+        
+        data.append({
+            'label': label,
+            'value': count,
+            'percentage': percent(count, total),
+            'type': fetus_type
+        })
+    
+    result = {
+        'fetus_number_data': data,
+        'total_patients': total
+    }
+    
+    return Response(result, status=status.HTTP_200_OK)

@@ -70,6 +70,11 @@ urlpatterns = [
     path('analytics/primary-cs-comparison/', views.primary_cs_comparison, name='primary_cs_comparison'),
     path('analytics/instrumental-delivery-trends/', views.instrumental_delivery_trends, name='instrumental_delivery_trends'),
     path('analytics/robson-classification/', views.robson_classification, name='robson_classification'),
+    path('analytics/perineum-integrity/', views.perineum_integrity_stats, name='perineum_integrity_stats'),
+    path('analytics/birth-weight/', views.birth_weight_stats, name='birth_weight_stats'),
+    path('analytics/gestational-age/', views.gestational_age_stats, name='gestational_age_stats'),
+    path('analytics/presentation/', views.presentation_stats, name='presentation_stats'),
+    path('analytics/fetus-number/', views.fetus_number_stats, name='fetus_number_stats'),
     path('users/', views.UserListCreateView.as_view(), name='user-list-create'),
     path('users/<int:pk>/approve/', views.ApproveUserView.as_view(), name='user-approve'),
 
