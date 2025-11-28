@@ -410,10 +410,39 @@ def booking_status(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def nationality_map(request):
-    """Return grouped nationality counts for map visualization with coordinates"""
+    """
+    Return grouped nationality counts for map visualization with coordinates.
+    Query params:
+    - start_date: YYYY-MM-DD (optional) - filter by time_of_admission >= start_date
+    - end_date: YYYY-MM-DD (optional) - filter by time_of_admission <= end_date
+    """
+    from datetime import datetime
+    
+    # Get query parameters
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    # Build base queryset
+    qs = Patient.objects.all()
+    
+    # Apply date filtering if provided
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__gte=start_date)
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            qs = qs.filter(time_of_admission__lte=end_date)
+        except ValueError:
+            pass
+    
     # Get all nationalities with their counts
     qs = (
-        Patient.objects.values('nationality')
+        qs.values('nationality')
         .annotate(count=Count('id'))
         .order_by('-count')
     )
@@ -1259,11 +1288,13 @@ def special_conditions(request):
 @permission_classes([IsAuthenticated])
 def mode_of_delivery_trends(request):
     """
-    Get mode of delivery trends over time with optional date range filtering.
+    Get mode of delivery trends over time with optional filtering.
     Query params:
     - start_date: YYYY-MM-DD (optional)
     - end_date: YYYY-MM-DD (optional)
     - forecast: boolean (optional, default False) - whether to include forecast
+    - assigned_doctor: integer (optional) - filter by assigned doctor ID
+    - total_number_of_cs: integer (optional) - filter by total number of CS
     """
     from datetime import datetime, timedelta
     from django.db.models import Count
@@ -1273,6 +1304,8 @@ def mode_of_delivery_trends(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     include_forecast = request.GET.get('forecast', 'false').lower() == 'true'
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
     
     # Build base queryset
     queryset = Patient.objects.filter(time_of_admission__isnull=False)
@@ -1291,6 +1324,17 @@ def mode_of_delivery_trends(request):
             queryset = queryset.filter(time_of_admission__lte=end_date)
         except ValueError:
             pass
+    
+    # Apply assigned doctor filter if provided
+    if assigned_doctor:
+        try:
+            queryset = queryset.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+    
+    # Apply total_number_of_cs filter if provided
+    if total_number_of_cs is not None:
+        queryset = queryset.filter(total_number_of_cs=str(total_number_of_cs))
     
     # Group by month and mode of delivery
     cs_by_month = (
@@ -1484,11 +1528,13 @@ def primary_cs_comparison(request):
 @permission_classes([IsAuthenticated])
 def instrumental_delivery_trends(request):
     """
-    Get instrumental delivery trends over time with optional date range filtering.
+    Get instrumental delivery trends over time with optional filtering.
     Query params:
     - start_date: YYYY-MM-DD (optional)
     - end_date: YYYY-MM-DD (optional)
     - forecast: boolean (optional, default False) - whether to include forecast
+    - assigned_doctor: integer (optional) - filter by assigned doctor ID
+    - total_number_of_cs: integer (optional) - filter by total number of CS
     """
     from datetime import datetime, timedelta
     from django.db.models import Count
@@ -1498,6 +1544,8 @@ def instrumental_delivery_trends(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     include_forecast = request.GET.get('forecast', 'false').lower() == 'true'
+    assigned_doctor = request.GET.get('assigned_doctor')
+    total_number_of_cs = request.GET.get('total_number_of_cs')
     
     # Build base queryset
     queryset = Patient.objects.filter(time_of_admission__isnull=False)
@@ -1516,6 +1564,17 @@ def instrumental_delivery_trends(request):
             queryset = queryset.filter(time_of_admission__lte=end_date)
         except ValueError:
             pass
+    
+    # Apply assigned doctor filter if provided
+    if assigned_doctor:
+        try:
+            queryset = queryset.filter(assigned_doctor_id=int(assigned_doctor))
+        except (ValueError, TypeError):
+            pass
+    
+    # Apply total_number_of_cs filter if provided
+    if total_number_of_cs is not None:
+        queryset = queryset.filter(total_number_of_cs=str(total_number_of_cs))
     
     # Group by month and count instrumental deliveries
     instrumental_by_month = (
@@ -2125,13 +2184,25 @@ def presentation_stats(request):
     def percent(part, total):
         return round((part / total) * 100, 2) if total else 0
     
-    # Build response data
-    data = []
+    # Build response data - combine preech with breech
+    aggregated_data = {}
     for item in presentation_counts:
         presentation_type = item['presentation']
-        count = item['count']
-        label = choice_labels.get(presentation_type, presentation_type)
+        # Normalize preech to breech
+        if presentation_type and presentation_type.lower() in ['preech', 'breech']:
+            presentation_type = 'breech'
+        elif presentation_type:
+            presentation_type = presentation_type.lower()
         
+        if presentation_type:
+            if presentation_type not in aggregated_data:
+                aggregated_data[presentation_type] = 0
+            aggregated_data[presentation_type] += item['count']
+    
+    # Build final data list
+    data = []
+    for presentation_type, count in aggregated_data.items():
+        label = choice_labels.get(presentation_type, presentation_type.capitalize())
         data.append({
             'label': label,
             'value': count,
