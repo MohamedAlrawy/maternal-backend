@@ -169,7 +169,7 @@ class Patient(models.Model):
     LIQUOR_CHOICES = [
         ('normal', 'Normal'),
         ('oligohydraminos', 'Oligohydramnios'),
-        ('polihydraminos', 'Polihydramnios'),
+        ('polyhydraminos', 'Polyhydraminos'),
     ]
     liquor = models.CharField(max_length=20, choices=LIQUOR_CHOICES, blank=True, null=True)
     estimated_fetal_weight_by_gm = models.FloatField(blank=True, null=True)
@@ -393,13 +393,13 @@ class Patient(models.Model):
         elif self.fetus_number and self.fetus_number == "single" and "Multiple gestation" in self.current_pregnancy_menternal:
             self.current_pregnancy_menternal.remove("Multiple gestation")
 
-        if self.liquor and self.liquor == "polihydraminos":
-            self.current_pregnancy_menternal.append("polihydraminos") if "polihydraminos" not in self.current_pregnancy_menternal else None    
+        if self.liquor and self.liquor in ["polihydraminos", "polyhydraminos"]:
+            self.current_pregnancy_menternal.append("polyhydraminos") if "polyhydraminos" not in self.current_pregnancy_menternal else None    
 
         if self.liquor and self.liquor == "oligohydraminos":
             self.current_pregnancy_menternal.append("oligohydraminos") if "oligohydraminos" not in self.current_pregnancy_menternal else None
 
-        if self.liquor and self.liquor != "polihydraminos" and "polihydraminos" in self.current_pregnancy_menternal:
+        if self.liquor and self.liquor not in ["polihydraminos", "polyhydraminos"] and "polyhydraminos" in self.current_pregnancy_menternal:
             self.current_pregnancy_menternal.remove("polihydraminos")
 
         if self.liquor and self.liquor != "oligohydraminos" and "oligohydraminos" in self.current_pregnancy_menternal:

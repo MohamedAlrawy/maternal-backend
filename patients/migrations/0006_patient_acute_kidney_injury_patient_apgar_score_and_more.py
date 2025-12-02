@@ -223,7 +223,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='patient',
             name='presentation',
-            field=models.CharField(blank=True, choices=[('cephlic', 'Cephalic'), ('preech', 'Breech'), ('transverse', 'Transverse'), ('oblique', 'Oblique')], max_length=20, null=True),
+            field=models.CharField(blank=True, choices=[('cephlic', 'Cephalic'), ('breech', 'Breech'), ('transverse', 'Transverse'), ('oblique', 'Oblique')], max_length=20, null=True),
         ),
         migrations.AddField(
             model_name='patient',

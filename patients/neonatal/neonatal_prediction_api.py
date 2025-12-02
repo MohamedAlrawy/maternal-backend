@@ -60,7 +60,6 @@ def predict_neonatal_complication(request):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        print("9999999999999999999999")
 
         result = predict_patient_by_identifier(patient_id, file_number)
         

@@ -7,6 +7,7 @@ CS Prediction API endpoint
 import os
 import json
 import pickle
+import random
 import numpy as np
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -78,7 +79,7 @@ DIRECT_PREDICTION_RULES = {
         'percentage': 90,
         'reason': 'Breech/transverse lies usually managed with CS to reduce perinatal risk',
         'check': lambda p: check_in_json(p.current_pregnancy_fetal, ['breech', 'transverse', 'oblique']) or 
-                          p.presentation in ['preech', 'transverse', 'oblique']
+                          p.presentation in ['breech', 'transverse', 'oblique']
     },
     'estimated_fetal_weight_4000': {
         'percentage': 50,
@@ -224,7 +225,7 @@ def extract_features_from_patient(patient):
     )
     
     # Presentation and delivery factors
-    is_non_cephalic = patient.presentation in ['preech', 'transverse', 'oblique']
+    is_non_cephalic = patient.presentation in ['preech', 'breech', 'transverse', 'oblique']
     features['presentation_non_cephalic'] = 1 if is_non_cephalic else 0
     features['multiple_fetuses'] = 1 if patient.fetus_number in ['twin', 'triplete'] else 0
     
@@ -348,6 +349,23 @@ def predict_patient_by_identifier(request):
             if features[fname]:  # If feature is present/True
                 active_risk_factors.append(f"{fname}: {importance:.3f}")
                 top_active_factors.append((fname, importance))
+        
+        # Check if there are no significant risk factors
+        # If no active risk factors found, return random 9-11%
+        if not top_active_factors:
+            random_probability = round(random.uniform(9.0, 11.0), 2)
+            return Response({
+                'success': True,
+                'patient_id': patient.patient_id,
+                'file_number': patient.file_number,
+                'patient_name': patient.name,
+                'cs_probability': random_probability,
+                'prediction_method': 'default (no risk factors)',
+                'reason': 'No significant risk factors identified. Baseline CS probability for low-risk pregnancy.',
+                'confidence': 'low',
+                'risk_factors': [],
+                'note': 'Default prediction: No significant risk factors detected'
+            })
         
         # Generate reason based on active risk factors
         reason = generate_ml_reason(top_active_factors, cs_probability)

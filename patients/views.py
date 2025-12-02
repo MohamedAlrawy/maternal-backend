@@ -1759,7 +1759,7 @@ def robson_classification(request):
             'label': 'All nulliparous breech',
             'count': cs_patients.filter(
                 parity=0,
-                presentation='preech',
+                presentation='breech',
                 fetus_number='single',
             ).count()
         },
@@ -1768,7 +1768,7 @@ def robson_classification(request):
             'label': 'All multiparous breech (including previous CS)',
             'count': cs_patients.filter(
                 parity__gte=1,
-                presentation='preech',
+                presentation='breech',
                 total_number_of_cs__gte='1',
                 obstetric_history__contains='Previous c-section (1)',
                 fetus_number='single',
